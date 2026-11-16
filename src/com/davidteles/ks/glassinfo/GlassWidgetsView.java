@@ -247,7 +247,9 @@ final class GlassWidgetsView extends View {
         List<String[]> chips = new ArrayList<>();
         for (String a : live.optString("info").split(" · ")) {
             String v = a.trim();
-            if (!v.isEmpty() && !v.equals("unknown") && !v.equals("unavailable")) chips.add(new String[] {"", v});
+            if (v.isEmpty() || v.equals("unknown") || v.equals("unavailable")) continue;
+            boolean crit = v.startsWith("!");
+            chips.add(new String[] {crit ? "!" : "", crit ? v.substring(1).trim() : v});
         }
         JSONArray g = live.optJSONArray("g");
         if (g != null) for (int i = 0; i < g.length(); i++) {
@@ -256,6 +258,7 @@ final class GlassWidgetsView extends View {
         }
         k = base * s.num("chipsScale", 100, 50, 250) / 100f;
         alertTint = color(s, "alertColor", Color.rgb(70, 48, 12));
+        criticalTint = color(s, "criticalColor", Color.rgb(120, 24, 24));
         infoAlign = s.str("infoAlign", "Right"); infoSize = s.num("infoSize", 19, 10, 40);
         boolean showRow = s.on("showChips") && !chips.isEmpty();
         boolean line = "Info line".equals(s.str("alertsStyle", "Chips"));
@@ -277,7 +280,7 @@ final class GlassWidgetsView extends View {
                 float x = (w - total) / 2, y = rowY + r * (chipH + rowGap);
                 for (int i = span[0]; i < span[1]; i++) {
                     String[] ch2 = chips.get(i);
-                    pill(x, y, chipW[i], chipH, ch2.length > 2 ? ch2[2] : "", ch2[0], ch2[1], ch2[0].isEmpty(), false);
+                    pill(x, y, chipW[i], chipH, ch2.length > 2 ? ch2[2] : "", ch2[0], ch2[1], ch2[0].isEmpty() || "!".equals(ch2[0]), false);
                     x += chipW[i] + dp(10);
                 }
             }
@@ -320,6 +323,7 @@ final class GlassWidgetsView extends View {
     }
 
     private int alertTint = Color.rgb(70, 48, 12);
+    private int criticalTint = Color.rgb(120, 24, 24);
     private String infoAlign = "Right";
     private float infoSize = 19;
 
@@ -328,7 +332,7 @@ final class GlassWidgetsView extends View {
         float[] widths = new float[chips.size()];
         for (int i = 0; i < chips.size(); i++) {
             String[] ch2 = chips.get(i);
-            font(12, 400, MUTED); float a = ch2[0].isEmpty() ? 0 : text.measureText(ch2[0]);
+            font(12, 400, MUTED); float a = ch2[0].isEmpty() || "!".equals(ch2[0]) ? 0 : text.measureText(ch2[0]);
             font(15, 500, INK); float b = text.measureText(ch2[1]);
             boolean icon = ch2.length > 2 && !ch2[2].isEmpty() && theme.iconPath(ch2[2]) != null;
             widths[i] = Math.min(avail, Math.max(a, b) + dp(32) + (icon ? dp(26) : 0));
@@ -351,8 +355,11 @@ final class GlassWidgetsView extends View {
 
     /** One rounded chip: amber when it is an alert. Two lines (small label over the value) unless oneLine or no label. */
     private void pill(float l, float t, float pw, float ph, String icon, String label, String value, boolean alert, boolean oneLine) {
+        boolean critical = "!".equals(label);
+        if (critical) label = "";
+        int tint = critical ? criticalTint : alertTint;
         rect.set(l, t, l + pw, t + ph);
-        fill.setColor(alert ? Color.argb(Math.max(Color.alpha(cardFill), 60), Color.red(alertTint), Color.green(alertTint), Color.blue(alertTint)) : cardFill);
+        fill.setColor(alert ? Color.argb(Math.max(Color.alpha(cardFill), critical ? 150 : 60), Color.red(tint), Color.green(tint), Color.blue(tint)) : cardFill);
         canvas.drawRoundRect(rect, ph / 2, ph / 2, fill);
         canvas.drawRoundRect(rect, ph / 2, ph / 2, stroke);
         float tx = l + dp(16);
@@ -379,7 +386,7 @@ final class GlassWidgetsView extends View {
     /** iPad style: everything on one line of text, right-aligned, with a soft shadow instead of cards. */
     private void drawInfoLine(List<String[]> chips, float w, float m, float y, float lineH, boolean top) {
         List<String> parts = new ArrayList<>();
-        for (String[] ch2 : chips) parts.add(ch2[0].isEmpty() ? ch2[1] : ch2[0] + " " + ch2[1]);
+        for (String[] ch2 : chips) parts.add(ch2[0].isEmpty() || "!".equals(ch2[0]) ? ch2[1] : ch2[0] + " " + ch2[1]);
         font(infoSize, 500, INK);
         text.setShadowLayer(dp(6), 0, dp(1), Color.argb(170, 0, 0, 0));
         String all = TextUtils.ellipsize(TextUtils.join("  ·  ", parts), text, w - m * 2, TextUtils.TruncateAt.END).toString();
@@ -397,6 +404,7 @@ final class GlassWidgetsView extends View {
     private void drawStrip(Canvas c, Snapshot s, float sideFrac, float top) {
         JSONObject live = s.live == null ? new JSONObject() : s.live;
         alertTint = color(s, "alertColor", Color.rgb(70, 48, 12));
+        criticalTint = color(s, "criticalColor", Color.rgb(120, 24, 24));
         float w = getWidth(), h = getHeight(), pad = dp(22), gap = dp(10);
         float side = w * sideFrac;
         float colW = Math.min(side - dp(28), dp(360));
@@ -425,8 +433,11 @@ final class GlassWidgetsView extends View {
         for (int i = 0; i < alerts.size(); i++) {
             if (y + pillH > bottomLimit) break;
             boolean last = y + pillH * 2 + gap > bottomLimit && i < alerts.size() - 1;
-            String v = last ? alerts.get(i) + "  +" + (alerts.size() - i - 1) : alerts.get(i);
-            pill(leftL, y, colW, pillH, "", "", v, true, true);
+            String a = alerts.get(i);
+            boolean crit = a.startsWith("!");
+            if (crit) a = a.substring(1).trim();
+            String v = last ? a + "  +" + (alerts.size() - i - 1) : a;
+            pill(leftL, y, colW, pillH, "", crit ? "!" : "", v, true, true);
             y += pillH + gap;
             if (last) break;
         }
