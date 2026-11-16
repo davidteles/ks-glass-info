@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "glass-info",
   "name": "Glass Info",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "apiVersion": 1,
   "minAndroidSdk": 24,
   "minAppVersion": "2026.11.14",
@@ -76,7 +76,7 @@
       "title": "Alerts line",
       "default": "",
       "group": "Home Assistant",
-      "description": "Optional. A sensor whose state lists alerts separated by ' · '. Each one becomes a chip; empty shows none."
+      "description": "Optional. A sensor whose state lists alerts separated by ' · '. Each one becomes a chip; start one with '!' to show it in the serious (red) colour. Empty shows none."
     },
     {
       "key": "days",
@@ -399,6 +399,14 @@
       "title": "Alert chip colour",
       "default": "#46300C",
       "group": "Chips"
+    },
+    {
+      "key": "criticalColor",
+      "type": "color",
+      "title": "Serious alert colour",
+      "default": "#781818",
+      "group": "Look",
+      "description": "Alerts that start with '!' in the alerts sensor (e.g. '!💧 Water leak') use this colour instead of the alert colour."
     },
     {
       "key": "textColor",

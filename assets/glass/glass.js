@@ -90,7 +90,8 @@
   function chips() {
     var box = $('chips'); box.textContent = '';
     String(live.info || '').split(' · ').map(function (s) { return s.trim(); }).filter(function (s) { return s && !/^(unknown|unavailable)$/.test(s); }).slice(0, 6).forEach(function (s) {
-      var c = document.createElement('span'); c.className = 'chip'; c.textContent = s; box.appendChild(c);
+      var crit = s.charAt(0) === '!';
+      var c = document.createElement('span'); c.className = crit ? 'chip crit' : 'chip'; c.textContent = crit ? s.slice(1).trim() : s; box.appendChild(c);
     });
   }
 

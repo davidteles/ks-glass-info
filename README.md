@@ -23,7 +23,7 @@ To use only these widgets, turn off the stock **Widgets** and **At a Glance** in
 | Look | Hide the stock widgets | Draws the stock widgets in black while the Glass Info mode shows |
 | Home Assistant | Weather entity | Temperature, condition and icon |
 | Home Assistant | Inside temperature | Any sensor; its state is shown as "… inside" |
-| Home Assistant | Alerts line | A sensor whose state lists alerts separated by ` · `. Each one becomes a chip; when it is empty, no alert chips show |
+| Home Assistant | Alerts line | A sensor whose state lists alerts separated by ` · `. Each one becomes a chip; start one with `!` (e.g. `!💧 Water leak`) to show it in the serious colour (red). When it is empty, no alert chips show |
 | Events | Calendars (a list: up to 4, each with its colour), days ahead, maximum events | Read with `calendar.get_events` every 10 minutes |
 | Day widgets | Glass widgets over other screensavers | Turns the day cards on or off |
 | Day widgets | Clock and weather beside Now Playing | Shows the clock, weather and alerts around the full-screen Now Playing player |
