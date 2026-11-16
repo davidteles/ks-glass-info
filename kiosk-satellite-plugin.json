@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "glass-info",
   "name": "Glass Info",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "apiVersion": 1,
   "minAndroidSdk": 24,
   "minAppVersion": "2026.11.14",
@@ -184,6 +184,133 @@
       "default": true,
       "group": "Day widgets",
       "description": "While the full-screen Now Playing player shows, a big clock and the weather sit either side of the cover, with your alerts in a slim pill at the top."
+    },
+    {
+      "key": "showClock",
+      "type": "boolean",
+      "title": "Show the clock card",
+      "default": true,
+      "group": "Day layout"
+    },
+    {
+      "key": "clockPosition",
+      "type": "select",
+      "title": "Clock position",
+      "default": "Top left",
+      "options": [
+        "Top left",
+        "Top right",
+        "Bottom left",
+        "Bottom right"
+      ],
+      "group": "Day layout"
+    },
+    {
+      "key": "showWeather",
+      "type": "boolean",
+      "title": "Show the weather card",
+      "default": true,
+      "group": "Day layout"
+    },
+    {
+      "key": "weatherPosition",
+      "type": "select",
+      "title": "Weather position",
+      "default": "Top right",
+      "options": [
+        "Top left",
+        "Top right",
+        "Bottom left",
+        "Bottom right"
+      ],
+      "group": "Day layout"
+    },
+    {
+      "key": "showEvents",
+      "type": "boolean",
+      "title": "Show the events card",
+      "default": true,
+      "group": "Day layout"
+    },
+    {
+      "key": "eventsPosition",
+      "type": "select",
+      "title": "Events position",
+      "default": "Bottom left",
+      "options": [
+        "Top left",
+        "Top right",
+        "Bottom left",
+        "Bottom right"
+      ],
+      "group": "Day layout",
+      "description": "Cards in the same corner stack."
+    },
+    {
+      "key": "showChips",
+      "type": "boolean",
+      "title": "Show alerts and chips",
+      "default": true,
+      "group": "Day layout"
+    },
+    {
+      "key": "alertsStyle",
+      "type": "select",
+      "title": "Alerts style",
+      "default": "Chips",
+      "options": [
+        "Chips",
+        "Info line"
+      ],
+      "group": "Day layout",
+      "description": "Info line = one line of text along the edge, like the iPad Panel's screensaver."
+    },
+    {
+      "key": "chipsPosition",
+      "type": "select",
+      "title": "Alerts position",
+      "default": "Bottom centre",
+      "options": [
+        "Bottom centre",
+        "Top centre"
+      ],
+      "group": "Day layout"
+    },
+    {
+      "key": "scale",
+      "type": "number",
+      "title": "Size",
+      "default": 100,
+      "min": 60,
+      "max": 180,
+      "step": 10,
+      "unit": "%",
+      "group": "Day look",
+      "description": "Scales every day card, text included."
+    },
+    {
+      "key": "cardOpacity",
+      "type": "number",
+      "title": "Card darkness",
+      "default": 46,
+      "min": 0,
+      "max": 90,
+      "step": 2,
+      "unit": "%",
+      "group": "Day look",
+      "description": "0 = text only, no glass."
+    },
+    {
+      "key": "clockWeight",
+      "type": "select",
+      "title": "Clock font weight",
+      "default": "Light",
+      "options": [
+        "Light",
+        "Regular",
+        "Bold"
+      ],
+      "group": "Day look"
     }
   ]
 }

@@ -27,6 +27,9 @@ To use only these widgets, turn off the stock **Widgets** and **At a Glance** in
 | Events | Calendar 1 and 2, days ahead, maximum events | Read with `calendar.get_events` every 10 minutes |
 | Day widgets | Glass widgets over other screensavers | Turns the day cards on or off |
 | Day widgets | Clock and weather beside Now Playing | Shows the clock, weather and alerts around the full-screen Now Playing player |
+| Day layout | Show / position of the clock, weather and events cards | Each card on or off, in any corner; cards in the same corner stack. Defaults: clock top left, weather top right, events bottom left |
+| Day layout | Alerts style and position | **Chips** (default) or **Info line**: one line of text along the edge, like the iPad Panel's screensaver; bottom or top centre |
+| Day look | Size, card darkness, clock font weight | Scale every card (60–180 %), how dark the glass is (0 % = text only), Light / Regular / Bold clock |
 | Day widgets | Chip 1–4 (entity + name) | Numbers are rounded and shown with their unit; other states are translated (e.g. "Disarmed") |
 
 ## How it works

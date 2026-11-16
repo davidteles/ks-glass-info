@@ -382,7 +382,7 @@ public final class GlassInfoPlugin implements KioskPlugin {
         options.put("data", data.toString());
         int accentColor;
         try { accentColor = Color.parseColor((String) options.get("accent")); } catch (RuntimeException error) { accentColor = 0xFFFFB547; }
-        snapshot = new GlassWidgetsView.Snapshot(live, events, accentColor, Boolean.TRUE.equals(options.get("h24")));
+        snapshot = new GlassWidgetsView.Snapshot(live, events, accentColor, Boolean.TRUE.equals(options.get("h24")), new HashMap<>(settings));
         GlassWidgetsView v = widgetsView;
         if (v != null) v.postInvalidate();
         GlassWidgetsView sv = stripView;

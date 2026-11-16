@@ -27,8 +27,14 @@ final class GlassWidgetsView extends View {
 
     /** Immutable data for one frame. */
     static final class Snapshot {
-        final JSONObject live; final JSONArray events; final int accent; final boolean h24;
-        Snapshot(JSONObject live, JSONArray events, int accent, boolean h24) { this.live = live; this.events = events; this.accent = accent; this.h24 = h24; }
+        final JSONObject live; final JSONArray events; final int accent; final boolean h24; final java.util.Map<String, Object> opt;
+        Snapshot(JSONObject live, JSONArray events, int accent, boolean h24) { this(live, events, accent, h24, new java.util.HashMap<String, Object>()); }
+        Snapshot(JSONObject live, JSONArray events, int accent, boolean h24, java.util.Map<String, Object> opt) {
+            this.live = live; this.events = events; this.accent = accent; this.h24 = h24; this.opt = opt;
+        }
+        String str(String k, String d) { Object v = opt.get(k); return v instanceof String && !((String) v).isEmpty() ? (String) v : d; }
+        boolean on(String k) { return !Boolean.FALSE.equals(opt.get(k)); }
+        float num(String k, float d, float lo, float hi) { Object v = opt.get(k); float f = v instanceof Number ? ((Number) v).floatValue() : d; return Math.max(lo, Math.min(hi, f)); }
     }
 
     private final KsTheme theme;
@@ -63,7 +69,9 @@ final class GlassWidgetsView extends View {
     @Override protected void onAttachedToWindow() { super.onAttachedToWindow(); post(tick); }
     @Override protected void onDetachedFromWindow() { removeCallbacks(tick); super.onDetachedFromWindow(); }
 
-    private float dp(float v) { return v * getResources().getDisplayMetrics().density; }
+    private float k = 1f;                 // user size setting, 1 = default
+    private float dp(float v) { return v * k * getResources().getDisplayMetrics().density; }
+    private int cardFill = Color.argb(118, 10, 12, 16);
 
     private void font(float sp, int weight, int color) {
         text.setTypeface(theme.typeface(weight));
@@ -74,9 +82,13 @@ final class GlassWidgetsView extends View {
     private void card(float l, float t, float r, float b) {
         rect.set(l, t, r, b);
         float radius = dp(22);
+        fill.setColor(cardFill);
         canvas.drawRoundRect(rect, radius, radius, fill);
         canvas.drawRoundRect(rect, radius, radius, stroke);
     }
+
+    /** One measured widget; draw(left, top) paints it. */
+    private abstract static class Box { float w, h; abstract void draw(float l, float t); }
 
     private Canvas canvas;
     private static final int INK = Color.rgb(243, 238, 230);
@@ -86,44 +98,76 @@ final class GlassWidgetsView extends View {
         Snapshot s = source.snapshot();
         if (s == null) return;
         canvas = c;
+        k = 1f;
+        cardFill = Color.argb(118, 10, 12, 16);
         if (compact) { drawStrip(c, s); return; }
-        float m = dp(28), pad = dp(20);
-        float w = getWidth(), h = getHeight();
+        k = s.num("scale", 100, 60, 180) / 100f;
+        cardFill = Color.argb(Math.round(s.num("cardOpacity", 46, 0, 90) * 2.55f), 10, 12, 16);
+        final int clockWeight = "Bold".equals(s.str("clockWeight", "Light")) ? 600 : "Regular".equals(s.str("clockWeight", "Light")) ? 400 : 300;
+        final float m = dp(28) / k * Math.min(k, 1.2f), pad = dp(20);
+        final float w = getWidth(), h = getHeight();
+        final JSONObject live = s.live == null ? new JSONObject() : s.live;
         Date now = new Date();
 
-        // Clock + date, top left.
-        String time = new SimpleDateFormat(s.h24 ? "HH:mm" : "h:mm", Locale.getDefault()).format(now);
-        String date = new SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(now);
-        if (!date.isEmpty()) date = Character.toUpperCase(date.charAt(0)) + date.substring(1);
-        font(66, 300, INK); float tw = text.measureText(time); float th = dp(66);
-        font(17, 400, s.accent); float dw = text.measureText(date);
-        float cw = Math.max(tw, dw) + pad * 2, ch = pad * 2 + th + dp(26);
-        card(m, m, m + cw, m + ch);
-        font(66, 300, INK); c.drawText(time, m + pad, m + pad + th * 0.82f, text);
-        font(17, 400, s.accent); c.drawText(date, m + pad, m + pad + th + dp(20), text);
-
-        // Weather + inside, top right.
-        JSONObject live = s.live == null ? new JSONObject() : s.live;
+        // ---- measure ----
+        final String time = new SimpleDateFormat(s.h24 ? "HH:mm" : "h:mm", Locale.getDefault()).format(now);
+        String d0 = new SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(now);
+        final String date = d0.isEmpty() ? d0 : Character.toUpperCase(d0.charAt(0)) + d0.substring(1);
+        Box clock = null;
+        if (s.on("showClock")) {
+            font(66, clockWeight, INK); final float tw = text.measureText(time); final float th = dp(66);
+            font(17, 400, s.accent); float dw = text.measureText(date);
+            clock = new Box() { void draw(float l, float t) {
+                card(l, t, l + w, t + h);
+                font(66, clockWeight, INK); canvas.drawText(time, l + pad, t + pad + th * 0.82f, text);
+                font(17, 400, s.accent); canvas.drawText(date, l + pad, t + pad + th + dp(20), text);
+            } };
+            clock.w = Math.max(tw, dw) + pad * 2; clock.h = pad * 2 + th + dp(26);
+        }
+        Box weather = null;
         Object temp = live.opt("temp");
-        if (temp instanceof Number) {
-            String t = Math.round(((Number) temp).doubleValue()) + live.optString("unit", "°");
-            String cond = condition(live.optString("cond"));
+        if (s.on("showWeather") && temp instanceof Number) {
+            final String t = Math.round(((Number) temp).doubleValue()) + live.optString("unit", "°");
+            final String cond = condition(live.optString("cond"));
             String inside = live.optString("inside");
-            String in = inside.isEmpty() || inside.contains("unknown") || inside.contains("unavailable") ? "" : inside + " inside";
+            final String in = inside.isEmpty() || inside.contains("unknown") || inside.contains("unavailable") ? "" : inside + " inside";
             font(42, 300, INK); float t1 = text.measureText(t);
             font(15, 400, MUTED); float t2 = Math.max(text.measureText(cond), text.measureText(in));
-            float icon = dp(48);
-            float ww = pad * 2 + icon + dp(14) + Math.max(t1, t2), wh = pad * 2 + dp(42) + dp(44);
-            float l = w - m - ww;
-            card(l, m, w - m, m + wh);
-            drawIcon(weatherIcon(live.optString("cond")), l + pad, m + pad + dp(6), icon);
-            float x = l + pad + icon + dp(14);
-            font(42, 300, INK); c.drawText(t, x, m + pad + dp(36), text);
-            font(15, 400, MUTED); c.drawText(cond, x, m + pad + dp(62), text);
-            if (!in.isEmpty()) c.drawText(in, x, m + pad + dp(82), text);
+            final float icon = dp(48);
+            weather = new Box() { void draw(float l, float top) {
+                card(l, top, l + w, top + h);
+                drawIcon(weatherIcon(live.optString("cond")), l + pad, top + pad + dp(6), icon);
+                float x = l + pad + icon + dp(14);
+                font(42, 300, INK); canvas.drawText(t, x, top + pad + dp(36), text);
+                font(15, 400, MUTED); canvas.drawText(cond, x, top + pad + dp(62), text);
+                if (!in.isEmpty()) canvas.drawText(in, x, top + pad + dp(82), text);
+            } };
+            weather.w = pad * 2 + icon + dp(14) + Math.max(t1, t2); weather.h = pad * 2 + dp(42) + dp(44);
+        }
+        Box events = null;
+        final JSONArray ev = s.events;
+        if (s.on("showEvents") && ev != null && ev.length() > 0) {
+            final int n = Math.min(ev.length(), 4);
+            final float row = dp(48);
+            events = new Box() { void draw(float l, float top) {
+                card(l, top, l + w, top + h);
+                for (int i = 0; i < n; i++) {
+                    JSONObject e = ev.optJSONObject(i);
+                    if (e == null) continue;
+                    float y = top + pad + i * row;
+                    fill.setColor(e.optInt("c", 1) == 2 ? Color.rgb(224, 178, 94) : Color.rgb(143, 201, 138));
+                    rect.set(l + pad, y + dp(2), l + pad + dp(4), y + row - dp(12));
+                    canvas.drawRoundRect(rect, dp(2), dp(2), fill);
+                    float tx = l + pad + dp(14), avail = w - pad * 2 - dp(14);
+                    font(13, 400, MUTED); canvas.drawText(when(e.optString("s"), s.h24), tx, y + dp(13), text);
+                    font(17, 400, INK);
+                    canvas.drawText(TextUtils.ellipsize(e.optString("m"), text, avail, TextUtils.TruncateAt.END).toString(), tx, y + dp(34), text);
+                }
+            } };
+            events.w = Math.min(dp(380), w * 0.36f); events.h = pad * 2 + n * row - dp(8);
         }
 
-        // Chips, bottom centre: alerts first, then the glance items.
+        // ---- alerts + glance: chips (default) or one iPad-style info line ----
         List<String[]> chips = new ArrayList<>();
         for (String a : live.optString("info").split(" · ")) {
             String v = a.trim();
@@ -134,7 +178,38 @@ final class GlassWidgetsView extends View {
             JSONArray item = g.optJSONArray(i);
             if (item != null && item.length() >= 2) chips.add(new String[] {item.optString(0), item.optString(1)});
         }
-        float chipH = dp(44), gap = dp(10), total = 0;
+        boolean showRow = s.on("showChips") && !chips.isEmpty();
+        boolean line = "Info line".equals(s.str("alertsStyle", "Chips"));
+        boolean rowTop = "Top centre".equals(s.str("chipsPosition", "Bottom centre"));
+        float rowH = line ? dp(30) : dp(44);
+        float topStart = m + (showRow && rowTop ? rowH + dp(16) : 0);
+        float bottomStart = h - m - (showRow && !rowTop ? rowH + dp(16) : 0);
+        if (showRow) {
+            float rowY = rowTop ? m : h - m - rowH;
+            if (line) drawInfoLine(chips, w, m, rowY, rowH, rowTop);
+            else drawChips(chips, w, m, rowY, rowH);
+        }
+
+        // ---- place: each corner stacks its cards (top corners downwards, bottom corners upwards) ----
+        float[] tops = {topStart, topStart}, bottoms = {bottomStart, bottomStart};
+        Object[][] order = {{clock, s.str("clockPosition", "Top left")}, {weather, s.str("weatherPosition", "Top right")},
+                            {events, s.str("eventsPosition", "Bottom left")}};
+        for (Object[] o : order) {
+            Box b = (Box) o[0];
+            if (b == null) continue;
+            String pos = (String) o[1];
+            boolean right = pos.endsWith("right"), bottom = pos.startsWith("Bottom");
+            int side = right ? 1 : 0;
+            float l = right ? w - m - b.w : m;
+            float t;
+            if (bottom) { t = bottoms[side] - b.h; bottoms[side] = t - dp(14); }
+            else { t = tops[side]; tops[side] = t + b.h + dp(14); }
+            b.draw(l, t);
+        }
+    }
+
+    private void drawChips(List<String[]> chips, float w, float m, float chipTop, float chipH) {
+        float gap = dp(10), total = 0;
         float[] widths = new float[chips.size()];
         for (int i = 0; i < chips.size(); i++) {
             String[] ch2 = chips.get(i);
@@ -143,48 +218,34 @@ final class GlassWidgetsView extends View {
             widths[i] = Math.max(a, b) + dp(32);
             total += widths[i] + (i > 0 ? gap : 0);
         }
-        float chipTop = h - m - chipH;
         float x0 = Math.max(m, (w - total) / 2);
         for (int i = 0; i < chips.size(); i++) {
             String[] ch2 = chips.get(i);
             if (x0 + widths[i] > w - m) break;
             rect.set(x0, chipTop, x0 + widths[i], chipTop + chipH);
             boolean alert = ch2[0].isEmpty();
-            fill.setColor(alert ? Color.argb(120, 70, 48, 12) : Color.argb(118, 10, 12, 16));
-            c.drawRoundRect(rect, chipH / 2, chipH / 2, fill);
-            c.drawRoundRect(rect, chipH / 2, chipH / 2, stroke);
-            fill.setColor(Color.argb(118, 10, 12, 16));
+            fill.setColor(alert ? Color.argb(Math.max(Color.alpha(cardFill), 60), 70, 48, 12) : cardFill);
+            canvas.drawRoundRect(rect, chipH / 2, chipH / 2, fill);
+            canvas.drawRoundRect(rect, chipH / 2, chipH / 2, stroke);
             if (alert) {
-                font(15, 500, INK); c.drawText(ch2[1], x0 + dp(16), chipTop + dp(28), text);
+                font(15, 500, INK); canvas.drawText(ch2[1], x0 + dp(16), chipTop + dp(28), text);
             } else {
-                font(12, 400, MUTED); c.drawText(ch2[0], x0 + dp(16), chipTop + dp(18), text);
-                font(15, 500, INK); c.drawText(ch2[1], x0 + dp(16), chipTop + dp(35), text);
+                font(12, 400, MUTED); canvas.drawText(ch2[0], x0 + dp(16), chipTop + dp(18), text);
+                font(15, 500, INK); canvas.drawText(ch2[1], x0 + dp(16), chipTop + dp(35), text);
             }
             x0 += widths[i] + gap;
         }
+    }
 
-        // Next events, bottom left above the chips.
-        JSONArray ev = s.events;
-        if (ev != null && ev.length() > 0) {
-            int n = Math.min(ev.length(), 4);
-            float row = dp(48), ew = Math.min(dp(380), w * 0.36f);
-            float eh = pad * 2 + n * row - dp(8);
-            float top = chipTop - dp(16) - eh;
-            card(m, top, m + ew, top + eh);
-            for (int i = 0; i < n; i++) {
-                JSONObject e = ev.optJSONObject(i);
-                if (e == null) continue;
-                float y = top + pad + i * row;
-                fill.setColor(e.optInt("c", 1) == 2 ? Color.rgb(224, 178, 94) : Color.rgb(143, 201, 138));
-                rect.set(m + pad, y + dp(2), m + pad + dp(4), y + row - dp(12));
-                c.drawRoundRect(rect, dp(2), dp(2), fill);
-                fill.setColor(Color.argb(118, 10, 12, 16));
-                float tx = m + pad + dp(14), avail = ew - pad * 2 - dp(14);
-                font(13, 400, MUTED); c.drawText(when(e.optString("s"), s.h24), tx, y + dp(13), text);
-                font(17, 400, INK);
-                c.drawText(TextUtils.ellipsize(e.optString("m"), text, avail, TextUtils.TruncateAt.END).toString(), tx, y + dp(34), text);
-            }
-        }
+    /** iPad style: everything on one line of text, right-aligned, with a soft shadow instead of cards. */
+    private void drawInfoLine(List<String[]> chips, float w, float m, float y, float lineH, boolean top) {
+        List<String> parts = new ArrayList<>();
+        for (String[] ch2 : chips) parts.add(ch2[0].isEmpty() ? ch2[1] : ch2[0] + " " + ch2[1]);
+        font(19, 500, INK);
+        text.setShadowLayer(dp(6), 0, dp(1), Color.argb(170, 0, 0, 0));
+        String all = TextUtils.ellipsize(TextUtils.join("  ·  ", parts), text, w - m * 2, TextUtils.TruncateAt.END).toString();
+        canvas.drawText(all, w - m - text.measureText(all), y + lineH * 0.75f, text);
+        text.clearShadowLayer();
     }
 
     /**
