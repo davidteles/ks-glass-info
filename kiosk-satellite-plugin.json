@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "glass-info",
   "name": "Glass Info",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "apiVersion": 1,
   "minAndroidSdk": 24,
   "minAppVersion": "2026.11.14",
@@ -79,20 +79,6 @@
       "description": "Optional. A sensor whose state lists alerts separated by ' · '. Each one becomes a chip; empty shows none."
     },
     {
-      "key": "calendar1",
-      "type": "entity",
-      "title": "Calendar 1",
-      "default": "",
-      "group": "Events"
-    },
-    {
-      "key": "calendar2",
-      "type": "entity",
-      "title": "Calendar 2",
-      "default": "",
-      "group": "Events"
-    },
-    {
       "key": "days",
       "type": "number",
       "title": "Days ahead",
@@ -120,62 +106,6 @@
       "default": true,
       "group": "Day widgets",
       "description": "Draws our clock, weather, next events and chips over the photo screensaver (any mode except Glass Info itself)."
-    },
-    {
-      "key": "glance1",
-      "type": "entity",
-      "title": "Chip 1",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance1Name",
-      "type": "string",
-      "title": "Chip 1 name",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance2",
-      "type": "entity",
-      "title": "Chip 2",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance2Name",
-      "type": "string",
-      "title": "Chip 2 name",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance3",
-      "type": "entity",
-      "title": "Chip 3",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance3Name",
-      "type": "string",
-      "title": "Chip 3 name",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance4",
-      "type": "entity",
-      "title": "Chip 4",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance4Name",
-      "type": "string",
-      "title": "Chip 4 name",
-      "default": "",
-      "group": "Day widgets"
     },
     {
       "key": "nowPlayingStrip",
@@ -441,20 +371,6 @@
       "group": "Events"
     },
     {
-      "key": "calendar1Color",
-      "type": "color",
-      "title": "Calendar 1 colour",
-      "default": "#8FC98A",
-      "group": "Events"
-    },
-    {
-      "key": "calendar2Color",
-      "type": "color",
-      "title": "Calendar 2 colour",
-      "default": "#E0B25E",
-      "group": "Events"
-    },
-    {
       "key": "chipsScale",
       "type": "number",
       "title": "Chips size",
@@ -523,170 +439,120 @@
       "group": "Day look"
     },
     {
-      "key": "customTemplate",
-      "type": "string",
-      "title": "Free text (Home Assistant template)",
-      "default": "",
+      "key": "calendars",
+      "type": "list",
+      "title": "Calendars",
+      "group": "Events",
+      "addTitle": "Add calendar",
+      "maxItems": 4,
+      "default": [],
+      "row": {
+        "title": "entity"
+      },
+      "description": "Up to 4 calendars, each with its own colour.",
+      "fields": [
+        {
+          "key": "entity",
+          "type": "entity",
+          "title": "Calendar",
+          "required": true
+        },
+        {
+          "key": "color",
+          "type": "color",
+          "title": "Colour",
+          "default": "#8FC98A"
+        }
+      ]
+    },
+    {
+      "key": "chips",
+      "type": "list",
+      "title": "Chips",
+      "group": "Chips",
+      "addTitle": "Add chip",
+      "maxItems": 8,
+      "default": [],
+      "row": {
+        "title": "name",
+        "subtitle": "entity",
+        "icon": "icon"
+      },
+      "description": "Up to 8 entities shown after the alerts. Numbers are rounded with their unit; other states are translated (e.g. Disarmed).",
+      "fields": [
+        {
+          "key": "entity",
+          "type": "entity",
+          "title": "Entity",
+          "required": true
+        },
+        {
+          "key": "name",
+          "type": "string",
+          "title": "Name",
+          "default": ""
+        },
+        {
+          "key": "icon",
+          "type": "icon",
+          "title": "Icon",
+          "default": ""
+        }
+      ]
+    },
+    {
+      "key": "texts",
+      "type": "list",
+      "title": "Free text cards",
       "group": "Free text",
-      "description": "Any template, e.g. {{ states('sensor.outside_humidity') }} % humidity. Empty = off. Several lines are allowed."
-    },
-    {
-      "key": "customPosition",
-      "type": "select",
-      "title": "Free text position",
-      "default": "Bottom right",
-      "options": [
-        "Top left",
-        "Top right",
-        "Bottom left",
-        "Bottom right"
-      ],
-      "group": "Free text"
-    },
-    {
-      "key": "customStyle",
-      "type": "select",
-      "title": "Free text style",
-      "default": "Card",
-      "options": [
-        "Card",
-        "Text only"
-      ],
-      "group": "Free text"
-    },
-    {
-      "key": "customSize",
-      "type": "number",
-      "title": "Free text size",
-      "default": 18,
-      "min": 10,
-      "max": 48,
-      "step": 1,
-      "unit": "sp",
-      "group": "Free text"
-    },
-    {
-      "key": "customScale",
-      "type": "number",
-      "title": "Free text card size",
-      "default": 100,
-      "min": 50,
-      "max": 250,
-      "step": 10,
-      "unit": "%",
-      "group": "Free text"
-    },
-    {
-      "key": "glance1Icon",
-      "type": "icon",
-      "title": "Chip 1 icon",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance2Icon",
-      "type": "icon",
-      "title": "Chip 2 icon",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance3Icon",
-      "type": "icon",
-      "title": "Chip 3 icon",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance4Icon",
-      "type": "icon",
-      "title": "Chip 4 icon",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance5",
-      "type": "entity",
-      "title": "Chip 5",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance5Name",
-      "type": "string",
-      "title": "Chip 5 name",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance5Icon",
-      "type": "icon",
-      "title": "Chip 5 icon",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance6",
-      "type": "entity",
-      "title": "Chip 6",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance6Name",
-      "type": "string",
-      "title": "Chip 6 name",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance6Icon",
-      "type": "icon",
-      "title": "Chip 6 icon",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance7",
-      "type": "entity",
-      "title": "Chip 7",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance7Name",
-      "type": "string",
-      "title": "Chip 7 name",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance7Icon",
-      "type": "icon",
-      "title": "Chip 7 icon",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance8",
-      "type": "entity",
-      "title": "Chip 8",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance8Name",
-      "type": "string",
-      "title": "Chip 8 name",
-      "default": "",
-      "group": "Day widgets"
-    },
-    {
-      "key": "glance8Icon",
-      "type": "icon",
-      "title": "Chip 8 icon",
-      "default": "",
-      "group": "Day widgets"
+      "addTitle": "Add text",
+      "maxItems": 6,
+      "default": [],
+      "row": {
+        "title": "template",
+        "subtitle": "position"
+      },
+      "description": "Each row is a Home Assistant template shown as a card or plain text, e.g. {{ states('sensor.outside_humidity') }} % humidity. Several lines allowed.",
+      "fields": [
+        {
+          "key": "template",
+          "type": "string",
+          "title": "Template",
+          "required": true
+        },
+        {
+          "key": "position",
+          "type": "select",
+          "title": "Position",
+          "default": "Bottom right",
+          "options": [
+            "Top left",
+            "Top right",
+            "Bottom left",
+            "Bottom right"
+          ]
+        },
+        {
+          "key": "style",
+          "type": "select",
+          "title": "Style",
+          "default": "Card",
+          "options": [
+            "Card",
+            "Text only"
+          ]
+        },
+        {
+          "key": "size",
+          "type": "number",
+          "title": "Text size",
+          "default": 18,
+          "min": 10,
+          "max": 48,
+          "step": 1,
+          "unit": "sp"
+        }
+      ]
     }
   ]
 }

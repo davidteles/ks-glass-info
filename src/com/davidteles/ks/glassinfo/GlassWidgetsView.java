@@ -129,7 +129,16 @@ final class GlassWidgetsView extends View {
         family = s.str("fontFamily", "Kiosk Satellite");
         radiusDp = s.num("cornerRadius", 22, 0, 40);
         iconColor = color(s, "weatherIconColor", Color.rgb(214, 221, 232));
-        final int cal1 = color(s, "calendar1Color", Color.rgb(143, 201, 138)), cal2 = color(s, "calendar2Color", Color.rgb(224, 178, 94));
+        final int[] calColors = {Color.rgb(143, 201, 138), Color.rgb(224, 178, 94), Color.rgb(127, 183, 255), Color.rgb(232, 140, 180)};
+        Object calRows = s.opt.get("calendars");
+        if (calRows instanceof List) {
+            List<?> cl = (List<?>) calRows;
+            for (int ci = 0; ci < cl.size() && ci < 4; ci++) {
+                Object row = cl.get(ci);
+                Object cv = row instanceof java.util.Map ? ((java.util.Map<?, ?>) row).get("color") : null;
+                if (cv instanceof String && ((String) cv).matches("#[0-9a-fA-F]{6}")) calColors[ci] = Color.parseColor((String) cv);
+            }
+        }
         final int clockWeight = "Bold".equals(s.str("clockWeight", "Light")) ? 600 : "Regular".equals(s.str("clockWeight", "Light")) ? 400 : 300;
         final float m = getResources().getDisplayMetrics().density * s.num("edgeMargin", 28, 0, 120), pad = dp(20);
         final float w = getWidth(), h = getHeight();
@@ -195,7 +204,7 @@ final class GlassWidgetsView extends View {
                     JSONObject e = ev.optJSONObject(i);
                     if (e == null) continue;
                     float y = top + pad + i * row;
-                    fill.setColor(e.optInt("c", 1) == 2 ? cal2 : cal1);
+                    fill.setColor(calColors[Math.max(0, Math.min(3, e.optInt("c", 0)))]);
                     rect.set(l + pad, y + dp(2), l + pad + dp(4), y + row - dp(12));
                     canvas.drawRoundRect(rect, dp(2), dp(2), fill);
                     float tx = l + pad + dp(14), avail = w - pad * 2 - dp(14);
@@ -207,18 +216,23 @@ final class GlassWidgetsView extends View {
             events.w = Math.min(dp(380), w * s.num("eventsWidth", 36, 20, 60) / 100f); events.h = pad * 2 + n * row - dp(8);
         }
 
-        Box custom = null;
-        final String customText = live.optString("x").trim();
-        if (!customText.isEmpty() && !customText.equals("unknown") && !customText.equals("unavailable")) {
-            final float kk = base * s.num("customScale", 100, 50, 250) / 100f; k = kk;
-            final float cs = s.num("customSize", 18, 10, 48);
-            final boolean glass = !"Text only".equals(s.str("customStyle", "Card"));
+        List<Object[]> customs = new ArrayList<>();
+        JSONArray xs = live.optJSONArray("xs");
+        if (xs != null) for (int xi = 0; xi < xs.length(); xi++) {
+            JSONObject x = xs.optJSONObject(xi);
+            if (x == null) continue;
+            final String customText = x.optString("t").trim();
+            if (customText.isEmpty() || customText.equals("unknown") || customText.equals("unavailable")) continue;
+            k = base;
+            final float cs = (float) Math.max(10, Math.min(48, x.optDouble("size", 18)));
+            final boolean glass = !"Text only".equals(x.optString("style", "Card"));
             font(cs, 500, INK);
-            final List<String> lines = new ArrayList<>(java.util.Arrays.asList(customText.split("\n")));
+            final List<String> lines = new ArrayList<>(java.util.Arrays.asList(customText.split("\\n")));
             float lw = 0; for (String l : lines) lw = Math.max(lw, text.measureText(l));
             final float maxW = w * 0.45f, lh = dp(cs * 1.35f), cp = glass ? pad : 0;
             final float cw = Math.min(lw, maxW);
-            custom = new Box() { void draw(float l, float t) {
+            final float kk = base;
+            Box b = new Box() { void draw(float l, float t) {
                 k = kk;
                 if (glass) card(l, t, l + w, t + h);
                 font(cs, 500, INK);
@@ -227,7 +241,8 @@ final class GlassWidgetsView extends View {
                 for (String line : lines) { canvas.drawText(TextUtils.ellipsize(line, text, cw, TextUtils.TruncateAt.END).toString(), l + cp, y, text); y += lh; }
                 text.clearShadowLayer();
             } };
-            custom.w = cw + cp * 2; custom.h = lines.size() * lh + cp * 2 - lh * 0.2f;
+            b.w = cw + cp * 2; b.h = lines.size() * lh + cp * 2 - lh * 0.2f;
+            customs.add(new Object[] {b, x.optString("pos", "Bottom right")});
         }
         k = base;
 
@@ -260,8 +275,11 @@ final class GlassWidgetsView extends View {
         // ---- place: each corner stacks its cards (top corners downwards, bottom corners upwards) ----
         float[] tops = {topStart, topStart}, bottoms = {bottomStart, bottomStart};
         k = base;
-        Object[][] order = {{clock, s.str("clockPosition", "Top left")}, {weather, s.str("weatherPosition", "Top right")},
-                            {events, s.str("eventsPosition", "Bottom left")}, {custom, s.str("customPosition", "Bottom right")}};
+        List<Object[]> order = new ArrayList<>();
+        order.add(new Object[] {clock, s.str("clockPosition", "Top left")});
+        order.add(new Object[] {weather, s.str("weatherPosition", "Top right")});
+        order.add(new Object[] {events, s.str("eventsPosition", "Bottom left")});
+        order.addAll(customs);
         for (Object[] o : order) {
             Box b = (Box) o[0];
             if (b == null) continue;

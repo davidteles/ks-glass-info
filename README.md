@@ -24,7 +24,7 @@ To use only these widgets, turn off the stock **Widgets** and **At a Glance** in
 | Home Assistant | Weather entity | Temperature, condition and icon |
 | Home Assistant | Inside temperature | Any sensor; its state is shown as "… inside" |
 | Home Assistant | Alerts line | A sensor whose state lists alerts separated by ` · `. Each one becomes a chip; when it is empty, no alert chips show |
-| Events | Calendar 1 and 2, days ahead, maximum events | Read with `calendar.get_events` every 10 minutes |
+| Events | Calendars (a list: up to 4, each with its colour), days ahead, maximum events | Read with `calendar.get_events` every 10 minutes |
 | Day widgets | Glass widgets over other screensavers | Turns the day cards on or off |
 | Day widgets | Clock and weather beside Now Playing | Shows the clock, weather and alerts around the full-screen Now Playing player |
 | Day layout | Show / position of the clock, weather and events cards | Each card on or off, in any corner; cards in the same corner stack. Defaults: clock top left, weather top right, events bottom left |
@@ -32,10 +32,9 @@ To use only these widgets, turn off the stock **Widgets** and **At a Glance** in
 | Day look | Size, card darkness, border, corner rounding, glass tint, text colour, font, clock weight | Light / Regular / Bold clock; Kiosk Satellite, System, Condensed, Serif or Monospace font |
 | Clock | Card size, date on/off, date format, seconds | Any Android date pattern, e.g. `EEE d MMM` |
 | Weather | Card size, icon, condition, inside temperature, icon colour | Each line on or off |
-| Events | Card size and width, colour per calendar | Plus calendars, days ahead and maximum events |
-| Chips | Up to 8 entities, each with a name and an icon; size; alert colour | Numbers rounded with their unit, other states translated |
-| Free text | Any Home Assistant template, position, card or text only, size | Several lines allowed, e.g. `{{ states('sensor.outside_humidity') }} % humidity` |
-| Day widgets | Chip 1–8 (entity + name + icon) | Numbers are rounded and shown with their unit; other states are translated (e.g. "Disarmed") |
+| Events | Card size and width | Colours are set per calendar in the Calendars list |
+| Chips | A list of up to 8 entities, each with a name and an icon; size; alert colour | Numbers rounded with their unit, other states translated |
+| Free text | A list of up to 6 cards: any Home Assistant template, position, card or text only, size | Several lines allowed, e.g. `{{ states('sensor.outside_humidity') }} % humidity` |
 
 ## How it works
 - **Live values:** one Home Assistant `render_template` subscription returns all of them at once.
