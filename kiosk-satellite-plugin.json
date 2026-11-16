@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "glass-info",
   "name": "Glass Info",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "apiVersion": 1,
   "minAndroidSdk": 24,
   "minAppVersion": "2026.11.14",
@@ -110,10 +110,10 @@
     {
       "key": "nowPlayingStrip",
       "type": "boolean",
-      "title": "Clock and weather beside Now Playing",
+      "title": "Clock, alerts and weather beside Now Playing",
       "default": true,
       "group": "Day widgets",
-      "description": "While the full-screen Now Playing player shows, a big clock and the weather sit either side of the cover, with your alerts in a slim pill at the top."
+      "description": "While the full-screen Now Playing player shows: a big clock with every alert under it on the left, the weather with your chips and the next events on the right."
     },
     {
       "key": "showClock",
