@@ -29,8 +29,13 @@ To use only these widgets, turn off the stock **Widgets** and **At a Glance** in
 | Day widgets | Clock and weather beside Now Playing | Shows the clock, weather and alerts around the full-screen Now Playing player |
 | Day layout | Show / position of the clock, weather and events cards | Each card on or off, in any corner; cards in the same corner stack. Defaults: clock top left, weather top right, events bottom left |
 | Day layout | Alerts style and position | **Chips** (default) or **Info line**: one line of text along the edge, like the iPad Panel's screensaver; bottom or top centre |
-| Day look | Size, card darkness, clock font weight | Scale every card (60–180 %), how dark the glass is (0 % = text only), Light / Regular / Bold clock |
-| Day widgets | Chip 1–4 (entity + name) | Numbers are rounded and shown with their unit; other states are translated (e.g. "Disarmed") |
+| Day look | Size, card darkness, border, corner rounding, glass tint, text colour, font, clock weight | Light / Regular / Bold clock; Kiosk Satellite, System, Condensed, Serif or Monospace font |
+| Clock | Card size, date on/off, date format, seconds | Any Android date pattern, e.g. `EEE d MMM` |
+| Weather | Card size, icon, condition, inside temperature, icon colour | Each line on or off |
+| Events | Card size and width, colour per calendar | Plus calendars, days ahead and maximum events |
+| Chips | Up to 8 entities, each with a name and an icon; size; alert colour | Numbers rounded with their unit, other states translated |
+| Free text | Any Home Assistant template, position, card or text only, size | Several lines allowed, e.g. `{{ states('sensor.outside_humidity') }} % humidity` |
+| Day widgets | Chip 1–8 (entity + name + icon) | Numbers are rounded and shown with their unit; other states are translated (e.g. "Disarmed") |
 
 ## How it works
 - **Live values:** one Home Assistant `render_template` subscription returns all of them at once.

@@ -311,6 +311,382 @@
         "Bold"
       ],
       "group": "Day look"
+    },
+    {
+      "key": "edgeMargin",
+      "type": "number",
+      "title": "Distance from the screen edge",
+      "default": 28,
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "dp",
+      "group": "Day layout"
+    },
+    {
+      "key": "infoAlign",
+      "type": "select",
+      "title": "Info line alignment",
+      "default": "Right",
+      "options": [
+        "Left",
+        "Centre",
+        "Right"
+      ],
+      "group": "Day layout"
+    },
+    {
+      "key": "infoSize",
+      "type": "number",
+      "title": "Info line text size",
+      "default": 19,
+      "min": 10,
+      "max": 40,
+      "step": 1,
+      "unit": "sp",
+      "group": "Day layout"
+    },
+    {
+      "key": "clockScale",
+      "type": "number",
+      "title": "Clock card size",
+      "default": 100,
+      "min": 50,
+      "max": 250,
+      "step": 10,
+      "unit": "%",
+      "group": "Clock"
+    },
+    {
+      "key": "showDate",
+      "type": "boolean",
+      "title": "Show the date",
+      "default": true,
+      "group": "Clock"
+    },
+    {
+      "key": "dateFormat",
+      "type": "string",
+      "title": "Date format",
+      "default": "EEEE, d MMMM",
+      "group": "Clock",
+      "description": "Android date pattern, e.g. 'EEEE, d MMMM' (Monday, 16 November), 'EEE d MMM' (Mon 16 Nov), 'd/MM/yyyy'."
+    },
+    {
+      "key": "showSeconds",
+      "type": "boolean",
+      "title": "Show seconds",
+      "default": false,
+      "group": "Clock"
+    },
+    {
+      "key": "weatherScale",
+      "type": "number",
+      "title": "Weather card size",
+      "default": 100,
+      "min": 50,
+      "max": 250,
+      "step": 10,
+      "unit": "%",
+      "group": "Weather"
+    },
+    {
+      "key": "showWeatherIcon",
+      "type": "boolean",
+      "title": "Show the weather icon",
+      "default": true,
+      "group": "Weather"
+    },
+    {
+      "key": "showCondition",
+      "type": "boolean",
+      "title": "Show the condition (e.g. Partly cloudy)",
+      "default": true,
+      "group": "Weather"
+    },
+    {
+      "key": "showInside",
+      "type": "boolean",
+      "title": "Show the inside temperature",
+      "default": true,
+      "group": "Weather"
+    },
+    {
+      "key": "weatherIconColor",
+      "type": "color",
+      "title": "Weather icon colour",
+      "default": "#D6DDE8",
+      "group": "Weather"
+    },
+    {
+      "key": "eventsScale",
+      "type": "number",
+      "title": "Events card size",
+      "default": 100,
+      "min": 50,
+      "max": 250,
+      "step": 10,
+      "unit": "%",
+      "group": "Events"
+    },
+    {
+      "key": "eventsWidth",
+      "type": "number",
+      "title": "Events card width",
+      "default": 36,
+      "min": 20,
+      "max": 60,
+      "step": 2,
+      "unit": "% of the screen",
+      "group": "Events"
+    },
+    {
+      "key": "calendar1Color",
+      "type": "color",
+      "title": "Calendar 1 colour",
+      "default": "#8FC98A",
+      "group": "Events"
+    },
+    {
+      "key": "calendar2Color",
+      "type": "color",
+      "title": "Calendar 2 colour",
+      "default": "#E0B25E",
+      "group": "Events"
+    },
+    {
+      "key": "chipsScale",
+      "type": "number",
+      "title": "Chips size",
+      "default": 100,
+      "min": 50,
+      "max": 250,
+      "step": 10,
+      "unit": "%",
+      "group": "Chips"
+    },
+    {
+      "key": "alertColor",
+      "type": "color",
+      "title": "Alert chip colour",
+      "default": "#46300C",
+      "group": "Chips"
+    },
+    {
+      "key": "textColor",
+      "type": "color",
+      "title": "Text colour",
+      "default": "#F3EEE6",
+      "group": "Day look"
+    },
+    {
+      "key": "glassColor",
+      "type": "color",
+      "title": "Glass tint",
+      "default": "#0A0C10",
+      "group": "Day look"
+    },
+    {
+      "key": "borderOpacity",
+      "type": "number",
+      "title": "Card border",
+      "default": 18,
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "%",
+      "group": "Day look"
+    },
+    {
+      "key": "cornerRadius",
+      "type": "number",
+      "title": "Corner rounding",
+      "default": 22,
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "dp",
+      "group": "Day look"
+    },
+    {
+      "key": "fontFamily",
+      "type": "select",
+      "title": "Font",
+      "default": "Kiosk Satellite",
+      "options": [
+        "Kiosk Satellite",
+        "System",
+        "Condensed",
+        "Serif",
+        "Monospace"
+      ],
+      "group": "Day look"
+    },
+    {
+      "key": "customTemplate",
+      "type": "string",
+      "title": "Free text (Home Assistant template)",
+      "default": "",
+      "group": "Free text",
+      "description": "Any template, e.g. {{ states('sensor.outside_humidity') }} % humidity. Empty = off. Several lines are allowed."
+    },
+    {
+      "key": "customPosition",
+      "type": "select",
+      "title": "Free text position",
+      "default": "Bottom right",
+      "options": [
+        "Top left",
+        "Top right",
+        "Bottom left",
+        "Bottom right"
+      ],
+      "group": "Free text"
+    },
+    {
+      "key": "customStyle",
+      "type": "select",
+      "title": "Free text style",
+      "default": "Card",
+      "options": [
+        "Card",
+        "Text only"
+      ],
+      "group": "Free text"
+    },
+    {
+      "key": "customSize",
+      "type": "number",
+      "title": "Free text size",
+      "default": 18,
+      "min": 10,
+      "max": 48,
+      "step": 1,
+      "unit": "sp",
+      "group": "Free text"
+    },
+    {
+      "key": "customScale",
+      "type": "number",
+      "title": "Free text card size",
+      "default": 100,
+      "min": 50,
+      "max": 250,
+      "step": 10,
+      "unit": "%",
+      "group": "Free text"
+    },
+    {
+      "key": "glance1Icon",
+      "type": "icon",
+      "title": "Chip 1 icon",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance2Icon",
+      "type": "icon",
+      "title": "Chip 2 icon",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance3Icon",
+      "type": "icon",
+      "title": "Chip 3 icon",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance4Icon",
+      "type": "icon",
+      "title": "Chip 4 icon",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance5",
+      "type": "entity",
+      "title": "Chip 5",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance5Name",
+      "type": "string",
+      "title": "Chip 5 name",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance5Icon",
+      "type": "icon",
+      "title": "Chip 5 icon",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance6",
+      "type": "entity",
+      "title": "Chip 6",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance6Name",
+      "type": "string",
+      "title": "Chip 6 name",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance6Icon",
+      "type": "icon",
+      "title": "Chip 6 icon",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance7",
+      "type": "entity",
+      "title": "Chip 7",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance7Name",
+      "type": "string",
+      "title": "Chip 7 name",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance7Icon",
+      "type": "icon",
+      "title": "Chip 7 icon",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance8",
+      "type": "entity",
+      "title": "Chip 8",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance8Name",
+      "type": "string",
+      "title": "Chip 8 name",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance8Icon",
+      "type": "icon",
+      "title": "Chip 8 icon",
+      "default": "",
+      "group": "Day widgets"
     }
   ]
 }
