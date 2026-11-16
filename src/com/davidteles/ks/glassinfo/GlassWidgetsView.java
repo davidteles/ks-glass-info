@@ -129,16 +129,7 @@ final class GlassWidgetsView extends View {
         family = s.str("fontFamily", "Kiosk Satellite");
         radiusDp = s.num("cornerRadius", 22, 0, 40);
         iconColor = color(s, "weatherIconColor", Color.rgb(214, 221, 232));
-        final int[] calColors = {Color.rgb(143, 201, 138), Color.rgb(224, 178, 94), Color.rgb(127, 183, 255), Color.rgb(232, 140, 180)};
-        Object calRows = s.opt.get("calendars");
-        if (calRows instanceof List) {
-            List<?> cl = (List<?>) calRows;
-            for (int ci = 0; ci < cl.size() && ci < 4; ci++) {
-                Object row = cl.get(ci);
-                Object cv = row instanceof java.util.Map ? ((java.util.Map<?, ?>) row).get("color") : null;
-                if (cv instanceof String && ((String) cv).matches("#[0-9a-fA-F]{6}")) calColors[ci] = Color.parseColor((String) cv);
-            }
-        }
+        final int[] calColors = calColors(s);
         final int clockWeight = "Bold".equals(s.str("clockWeight", "Light")) ? 600 : "Regular".equals(s.str("clockWeight", "Light")) ? 400 : 300;
         final float m = getResources().getDisplayMetrics().density * s.num("edgeMargin", 28, 0, 120), pad = dp(20);
         final float w = getWidth(), h = getHeight();
@@ -263,13 +254,27 @@ final class GlassWidgetsView extends View {
         boolean showRow = s.on("showChips") && !chips.isEmpty();
         boolean line = "Info line".equals(s.str("alertsStyle", "Chips"));
         boolean rowTop = "Top centre".equals(s.str("chipsPosition", "Bottom centre"));
-        float rowH = line ? dp(30) : dp(44);
+        float chipH = line ? dp(30) : dp(44), rowGap = dp(8);
+        float[] chipW = line ? null : chipWidths(chips, w - m * 2);
+        List<int[]> chipLines = line ? null : chipRows(chipW, w - m * 2, dp(10));
+        int nRows = line ? 1 : Math.max(1, Math.min(3, chipLines.size()));
+        float rowH = nRows * chipH + (nRows - 1) * rowGap;
         float topStart = m + (showRow && rowTop ? rowH + dp(16) : 0);
         float bottomStart = h - m - (showRow && !rowTop ? rowH + dp(16) : 0);
         if (showRow) {
             float rowY = rowTop ? m : h - m - rowH;
-            if (line) drawInfoLine(chips, w, m, rowY, rowH, rowTop);
-            else drawChips(chips, w, m, rowY, rowH);
+            if (line) drawInfoLine(chips, w, m, rowY, chipH, rowTop);
+            else for (int r = 0; r < nRows; r++) {
+                int[] span = chipLines.get(r);
+                float total = 0;
+                for (int i = span[0]; i < span[1]; i++) total += chipW[i] + (i > span[0] ? dp(10) : 0);
+                float x = (w - total) / 2, y = rowY + r * (chipH + rowGap);
+                for (int i = span[0]; i < span[1]; i++) {
+                    String[] ch2 = chips.get(i);
+                    pill(x, y, chipW[i], chipH, ch2.length > 2 ? ch2[2] : "", ch2[0], ch2[1], ch2[0].isEmpty(), false);
+                    x += chipW[i] + dp(10);
+                }
+            }
         }
 
         // ---- place: each corner stacks its cards (top corners downwards, bottom corners upwards) ----
@@ -294,43 +299,74 @@ final class GlassWidgetsView extends View {
         }
     }
 
+    private static int[] calColors(Snapshot s) {
+        int[] out = {Color.rgb(143, 201, 138), Color.rgb(224, 178, 94), Color.rgb(127, 183, 255), Color.rgb(232, 140, 180)};
+        Object calRows = s.opt.get("calendars");
+        if (calRows instanceof List) {
+            List<?> cl = (List<?>) calRows;
+            for (int ci = 0; ci < cl.size() && ci < 4; ci++) {
+                Object row = cl.get(ci);
+                Object cv = row instanceof java.util.Map ? ((java.util.Map<?, ?>) row).get("color") : null;
+                if (cv instanceof String && ((String) cv).matches("#[0-9a-fA-F]{6}")) out[ci] = Color.parseColor((String) cv);
+            }
+        }
+        return out;
+    }
+
     private int alertTint = Color.rgb(70, 48, 12);
     private String infoAlign = "Right";
     private float infoSize = 19;
 
-    private void drawChips(List<String[]> chips, float w, float m, float chipTop, float chipH) {
-        float gap = dp(10), total = 0;
+    /** Width of each chip, never wider than the row. */
+    private float[] chipWidths(List<String[]> chips, float avail) {
         float[] widths = new float[chips.size()];
         for (int i = 0; i < chips.size(); i++) {
             String[] ch2 = chips.get(i);
             font(12, 400, MUTED); float a = ch2[0].isEmpty() ? 0 : text.measureText(ch2[0]);
             font(15, 500, INK); float b = text.measureText(ch2[1]);
             boolean icon = ch2.length > 2 && !ch2[2].isEmpty() && theme.iconPath(ch2[2]) != null;
-            widths[i] = Math.max(a, b) + dp(32) + (icon ? dp(26) : 0);
-            total += widths[i] + (i > 0 ? gap : 0);
+            widths[i] = Math.min(avail, Math.max(a, b) + dp(32) + (icon ? dp(26) : 0));
         }
-        float x0 = Math.max(m, (w - total) / 2);
-        for (int i = 0; i < chips.size(); i++) {
-            String[] ch2 = chips.get(i);
-            if (x0 + widths[i] > w - m) break;
-            rect.set(x0, chipTop, x0 + widths[i], chipTop + chipH);
-            boolean alert = ch2[0].isEmpty();
-            fill.setColor(alert ? Color.argb(Math.max(Color.alpha(cardFill), 60), Color.red(alertTint), Color.green(alertTint), Color.blue(alertTint)) : cardFill);
-            canvas.drawRoundRect(rect, chipH / 2, chipH / 2, fill);
-            canvas.drawRoundRect(rect, chipH / 2, chipH / 2, stroke);
-            float tx = x0 + dp(16);
-            if (ch2.length > 2 && !ch2[2].isEmpty() && theme.iconPath(ch2[2]) != null) {
-                int keep = iconColor; iconColor = INK;
-                drawIcon(ch2[2], x0 + dp(14), chipTop + (chipH - dp(20)) / 2, dp(20));
-                iconColor = keep; tx += dp(26);
-            }
-            if (alert) {
-                font(15, 500, INK); canvas.drawText(ch2[1], tx, chipTop + dp(28), text);
-            } else {
-                font(12, 400, MUTED); canvas.drawText(ch2[0], tx, chipTop + dp(18), text);
-                font(15, 500, INK); canvas.drawText(ch2[1], tx, chipTop + dp(35), text);
-            }
-            x0 += widths[i] + gap;
+        return widths;
+    }
+
+    /** Splits the chips into rows that fit, each row [from, to). Every row is drawn centred. */
+    private static List<int[]> chipRows(float[] widths, float avail, float gap) {
+        List<int[]> rows = new ArrayList<>();
+        int start = 0; float used = 0;
+        for (int i = 0; i < widths.length; i++) {
+            float need = widths[i] + (i > start ? gap : 0);
+            if (i > start && used + need > avail) { rows.add(new int[] {start, i}); start = i; used = widths[i]; }
+            else used += need;
+        }
+        if (start < widths.length) rows.add(new int[] {start, widths.length});
+        return rows;
+    }
+
+    /** One rounded chip: amber when it is an alert. Two lines (small label over the value) unless oneLine or no label. */
+    private void pill(float l, float t, float pw, float ph, String icon, String label, String value, boolean alert, boolean oneLine) {
+        rect.set(l, t, l + pw, t + ph);
+        fill.setColor(alert ? Color.argb(Math.max(Color.alpha(cardFill), 60), Color.red(alertTint), Color.green(alertTint), Color.blue(alertTint)) : cardFill);
+        canvas.drawRoundRect(rect, ph / 2, ph / 2, fill);
+        canvas.drawRoundRect(rect, ph / 2, ph / 2, stroke);
+        float tx = l + dp(16);
+        if (icon != null && !icon.isEmpty() && theme.iconPath(icon) != null) {
+            int keep = iconColor; iconColor = INK;
+            drawIcon(icon, l + dp(14), t + (ph - dp(20)) / 2, dp(20));
+            iconColor = keep; tx += dp(26);
+        }
+        float avail = Math.max(dp(20), l + pw - dp(14) - tx);
+        if (label.isEmpty()) {
+            font(15, 500, INK);
+            canvas.drawText(TextUtils.ellipsize(value, text, avail, TextUtils.TruncateAt.END).toString(), tx, t + ph / 2 + dp(5.5f), text);
+        } else if (oneLine) {
+            font(13, 400, MUTED); String lab = label + "  "; float lw = text.measureText(lab);
+            canvas.drawText(lab, tx, t + ph / 2 + dp(5), text);
+            font(15, 500, INK);
+            canvas.drawText(TextUtils.ellipsize(value, text, Math.max(dp(10), avail - lw), TextUtils.TruncateAt.END).toString(), tx + lw, t + ph / 2 + dp(5.5f), text);
+        } else {
+            font(12, 400, MUTED); canvas.drawText(label, tx, t + ph / 2 - dp(4), text);
+            font(15, 500, INK); canvas.drawText(TextUtils.ellipsize(value, text, avail, TextUtils.TruncateAt.END).toString(), tx, t + ph / 2 + dp(13), text);
         }
     }
 
@@ -348,65 +384,98 @@ final class GlassWidgetsView extends View {
     }
 
     /**
-     * Full-screen Now Playing: a big clock + date in the empty area left of the cover, weather + inside on the right,
-     * and only the alerts in a slim pill at the top. The cover and title use the middle third of the screen.
+     * Full-screen Now Playing. The cover, title and controls use the middle; each side gets a column:
+     * left = big clock + date, then every alert (amber); right = weather + inside, then your chips
+     * (alarm, car, power...) and the next events while there is room.
      */
     private void drawStrip(Canvas c, Snapshot s) {
         JSONObject live = s.live == null ? new JSONObject() : s.live;
-        float w = getWidth(), h = getHeight(), pad = dp(22);
-        float side = w * 0.30f;            // each side area
-        float cy = h * 0.32f;              // level with the cover
+        alertTint = color(s, "alertColor", Color.rgb(70, 48, 12));
+        float w = getWidth(), h = getHeight(), pad = dp(22), gap = dp(10);
+        float side = w * 0.30f;
+        float colW = Math.min(side - dp(28), dp(360));
+        float leftL = (side - colW) / 2 + dp(6), rightL = w - side + (side - colW) / 2 - dp(6);
+        float top = h * 0.10f, bottomLimit = h - dp(20);
 
-        // Left: clock + date.
+        // Left: clock + date, then the alerts.
         Date now = new Date();
         String time = new SimpleDateFormat(s.h24 ? "HH:mm" : "h:mm", Locale.getDefault()).format(now);
         String date = new SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(now);
         if (!date.isEmpty()) date = Character.toUpperCase(date.charAt(0)) + date.substring(1);
-        float size = Math.min(84, side / dp(1) * 0.30f);
+        float size = Math.min(84, colW / dp(1) * 0.30f);
         font(size, 300, INK); float tw = text.measureText(time); float th = dp(size);
-        font(17, 400, s.accent); String d2 = TextUtils.ellipsize(date, text, side - pad * 2 - dp(16), TextUtils.TruncateAt.END).toString(); float dw = text.measureText(d2);
-        float cw = Math.min(side - dp(16), Math.max(tw, dw) + pad * 2), ch = pad * 2 + th + dp(28);
-        float l = (side - cw) / 2 + dp(8), t = cy - ch / 2;
-        card(l, t, l + cw, t + ch);
-        font(size, 300, INK); c.drawText(time, l + (cw - tw) / 2, t + pad + th * 0.82f, text);
-        font(17, 400, s.accent); c.drawText(d2, l + (cw - dw) / 2, t + pad + th + dp(22), text);
+        font(17, 400, s.accent); String d2 = TextUtils.ellipsize(date, text, colW - pad * 2, TextUtils.TruncateAt.END).toString(); float dw = text.measureText(d2);
+        float ch = pad * 2 + th + dp(28);
+        card(leftL, top, leftL + colW, top + ch);
+        font(size, 300, INK); c.drawText(time, leftL + (colW - tw) / 2, top + pad + th * 0.82f, text);
+        font(17, 400, s.accent); c.drawText(d2, leftL + (colW - dw) / 2, top + pad + th + dp(22), text);
 
-        // Right: weather + inside.
+        List<String> alerts = new ArrayList<>();
+        for (String a : live.optString("info").split(" · ")) {
+            String v = a.trim();
+            if (!v.isEmpty() && !v.equals("unknown") && !v.equals("unavailable")) alerts.add(v);
+        }
+        float pillH = dp(40), y = top + ch + dp(14);
+        for (int i = 0; i < alerts.size(); i++) {
+            if (y + pillH > bottomLimit) break;
+            boolean last = y + pillH * 2 + gap > bottomLimit && i < alerts.size() - 1;
+            String v = last ? alerts.get(i) + "  +" + (alerts.size() - i - 1) : alerts.get(i);
+            pill(leftL, y, colW, pillH, "", "", v, true, true);
+            y += pillH + gap;
+            if (last) break;
+        }
+
+        // Right: weather + inside, then the chips, then the next events.
+        float ry = top;
         Object temp = live.opt("temp");
+        String inside = live.optString("inside");
         if (temp instanceof Number) {
             String tt = Math.round(((Number) temp).doubleValue()) + live.optString("unit", "°");
             String cond = condition(live.optString("cond"));
-            String inside = live.optString("inside");
             String in = inside.isEmpty() || inside.contains("unknown") || inside.contains("unavailable") ? "" : inside + " inside";
             float icon = dp(64);
-            font(54, 300, INK); float t1 = text.measureText(tt);
-            font(17, 400, MUTED); float t2 = Math.max(text.measureText(cond), text.measureText(in));
-            float ww = Math.min(side - dp(16), pad * 2 + icon + dp(16) + Math.max(t1, t2)), wh = pad * 2 + dp(54) + dp(52);
-            float rl = w - side + (side - ww) / 2 - dp(8), rt = cy - wh / 2;
-            card(rl, rt, rl + ww, rt + wh);
-            drawIcon(weatherIcon(live.optString("cond")), rl + pad, rt + pad + dp(10), icon);
-            float x = rl + pad + icon + dp(16);
-            font(54, 300, INK); c.drawText(tt, x, rt + pad + dp(46), text);
-            font(17, 400, MUTED); c.drawText(cond, x, rt + pad + dp(74), text);
-            if (!in.isEmpty()) c.drawText(in, x, rt + pad + dp(96), text);
+            float wh = pad * 2 + dp(54) + dp(52);
+            card(rightL, ry, rightL + colW, ry + wh);
+            drawIcon(weatherIcon(live.optString("cond")), rightL + pad, ry + pad + dp(10), icon);
+            float x = rightL + pad + icon + dp(16), avail = rightL + colW - pad - x;
+            font(54, 300, INK); c.drawText(tt, x, ry + pad + dp(46), text);
+            font(17, 400, MUTED); c.drawText(TextUtils.ellipsize(cond, text, avail, TextUtils.TruncateAt.END).toString(), x, ry + pad + dp(74), text);
+            if (!in.isEmpty()) c.drawText(TextUtils.ellipsize(in, text, avail, TextUtils.TruncateAt.END).toString(), x, ry + pad + dp(96), text);
+            ry += wh + dp(14);
         }
-
-        // Top: alerts only.
-        List<String> parts = new ArrayList<>();
-        for (String a : live.optString("info").split(" · ")) {
-            String v = a.trim();
-            if (!v.isEmpty() && !v.equals("unknown") && !v.equals("unavailable")) parts.add(v);
+        JSONArray g = live.optJSONArray("g");
+        if (g != null) for (int i = 0; i < g.length(); i++) {
+            JSONArray item = g.optJSONArray(i);
+            if (item == null || item.length() < 2) continue;
+            String value = item.optString(1);
+            if (!inside.isEmpty() && inside.equals(value)) continue;          // already in the weather card
+            if (value.isEmpty() || value.equals("unknown") || value.equals("unavailable")) continue;
+            if (ry + pillH > bottomLimit) break;
+            pill(rightL, ry, colW, pillH, item.optString(2, ""), item.optString(0), value, false, true);
+            ry += pillH + gap;
         }
-        if (parts.isEmpty()) return;
-        String line = TextUtils.join("   ·   ", parts);
-        font(15, 400, INK);
-        String shown = TextUtils.ellipsize(line, text, w * 0.5f, TextUtils.TruncateAt.END).toString();
-        float sw = text.measureText(shown), sh = dp(36), top = dp(10);
-        float sl = (w - sw) / 2 - dp(18);
-        rect.set(sl, top, sl + sw + dp(36), top + sh);
-        c.drawRoundRect(rect, sh / 2, sh / 2, fill);
-        c.drawRoundRect(rect, sh / 2, sh / 2, stroke);
-        c.drawText(shown, sl + dp(18), top + dp(23), text);
+        JSONArray ev = s.events;
+        if (ev != null && ev.length() > 0) {
+            int[] cols = calColors(s);
+            float row = dp(46), et = ry + dp(4);
+            int n = Math.min(ev.length(), (int) Math.floor((bottomLimit - et - pad * 2 + dp(8)) / row));
+            n = Math.min(n, 3);
+            if (n > 0) {
+                card(rightL, et, rightL + colW, et + pad * 2 + n * row - dp(8));
+                for (int i = 0; i < n; i++) {
+                    JSONObject e = ev.optJSONObject(i);
+                    if (e == null) continue;
+                    float ey = et + pad + i * row;
+                    fill.setColor(cols[Math.max(0, Math.min(3, e.optInt("c", 0)))]);
+                    rect.set(rightL + pad, ey + dp(2), rightL + pad + dp(4), ey + row - dp(12));
+                    c.drawRoundRect(rect, dp(2), dp(2), fill);
+                    float tx = rightL + pad + dp(14), avail = colW - pad * 2 - dp(14);
+                    font(13, 400, MUTED); c.drawText(when(e.optString("s"), s.h24), tx, ey + dp(13), text);
+                    font(16, 400, INK);
+                    c.drawText(TextUtils.ellipsize(e.optString("m"), text, avail, TextUtils.TruncateAt.END).toString(), tx, ey + dp(33), text);
+                }
+            }
+        }
     }
 
     private void drawIcon(String name, float x, float y, float size) {
