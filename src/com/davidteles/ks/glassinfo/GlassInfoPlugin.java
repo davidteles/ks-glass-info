@@ -41,7 +41,9 @@ public final class GlassInfoPlugin implements KioskPlugin {
     private static final String MODE = "plugin:glass-info:glass";
     private volatile GlassWidgetsView.Snapshot snapshot;
     private volatile GlassWidgetsView widgetsView;
-    private boolean screensaverActive, nowPlayingFull, overlayShown;
+    private volatile GlassWidgetsView stripView;
+    private boolean screensaverActive, nowPlayingFull, overlayShown, stripShown;
+    private static final String STRIP = "nowplaying";
 
     @Override
     public synchronized void start(PluginHost host, Map<String, Object> settings) {
@@ -57,7 +59,17 @@ public final class GlassInfoPlugin implements KioskPlugin {
         try { host.subscribe("screensaver.state"); } catch (RuntimeException ignored) { }
         try { host.subscribe("screensaver.appearance"); } catch (RuntimeException ignored) { }
         publish(true);
-        // The screensaver may already be on when the plugin starts or restarts after an update.
+        // The screensaver or Now Playing may already be on when the plugin starts or restarts after an update.
+        try {
+            host.executeCommand("getScreensaverAppearance", Collections.<String, Object>emptyMap(), (ok, data, error) -> {
+                if (ok && data instanceof Map) {
+                    Map<?, ?> m = (Map<?, ?>) data;
+                    synchronized (GlassInfoPlugin.this) {
+                        nowPlayingFull = Boolean.TRUE.equals(m.get("nowPlaying")) && !Boolean.TRUE.equals(m.get("nowPlayingShared"));
+                    }
+                }
+            });
+        } catch (RuntimeException ignored) { }
         timer.schedule(this::updateOverlay, 2, TimeUnit.SECONDS);
     }
 
@@ -116,6 +128,7 @@ public final class GlassInfoPlugin implements KioskPlugin {
         timer = null;
         if (host != null) {
             hideOverlay();
+            hideStrip();
             try { host.unsubscribe("screensaver.state"); } catch (RuntimeException ignored) { }
             try { host.unsubscribe("screensaver.appearance"); } catch (RuntimeException ignored) { }
             try { host.haUnsubscribe(SUB); } catch (RuntimeException ignored) { }
@@ -145,7 +158,13 @@ public final class GlassInfoPlugin implements KioskPlugin {
         synchronized (this) {
             h = host;
             if (h == null) return;
-            if (nowPlayingFull || Boolean.FALSE.equals(settings.get("dayWidgets"))) { hideOverlay(); return; }
+            if (nowPlayingFull) {
+                hideOverlay();
+                if (!Boolean.FALSE.equals(settings.get("nowPlayingStrip"))) showStrip();
+                return;
+            }
+            hideStrip();
+            if (Boolean.FALSE.equals(settings.get("dayWidgets"))) { hideOverlay(); return; }
         }
         try {
             h.executeCommand("getScreensaverMode", Collections.<String, Object>emptyMap(), (ok, data, error) -> {
@@ -180,6 +199,33 @@ public final class GlassInfoPlugin implements KioskPlugin {
         } catch (RuntimeException | LinkageError error) {
             host.log("Glass Info: overlay unavailable " + error.getMessage());
         }
+    }
+
+    private void showStrip() {
+        if (host == null || stripShown) return;
+        OverlaySpec spec = OverlaySpec.fullScreen().layer(OverlaySpec.LAYER_TOP).touchable(false);
+        try { spec = spec.enter(OverlaySpec.FADE).exit(OverlaySpec.FADE); } catch (LinkageError ignored) { }
+        try {
+            host.showOverlay(STRIP, spec, new OverlayFactory() {
+                @Override public View create(android.content.Context context, KsTheme theme) {
+                    GlassWidgetsView view = new GlassWidgetsView(context, theme, () -> snapshot, true);
+                    stripView = view;
+                    return view;
+                }
+                @Override public void onDestroy(View view) {
+                    if (stripView == view) stripView = null;
+                }
+            });
+            stripShown = true;
+        } catch (RuntimeException | LinkageError error) {
+            host.log("Glass Info: strip unavailable " + error.getMessage());
+        }
+    }
+
+    private void hideStrip() {
+        if (host == null || !stripShown) return;
+        try { host.hideOverlay(STRIP); } catch (RuntimeException ignored) { }
+        stripShown = false;
     }
 
     private void hideOverlay() {
@@ -339,6 +385,8 @@ public final class GlassInfoPlugin implements KioskPlugin {
         snapshot = new GlassWidgetsView.Snapshot(live, events, accentColor, Boolean.TRUE.equals(options.get("h24")));
         GlassWidgetsView v = widgetsView;
         if (v != null) v.postInvalidate();
+        GlassWidgetsView sv = stripView;
+        if (sv != null) sv.postInvalidate();
         String fingerprint = options.toString();
         if (!force && fingerprint.equals(lastPublished)) return;
         lastPublished = fingerprint;

@@ -33,6 +33,7 @@ final class GlassWidgetsView extends View {
 
     private final KsTheme theme;
     private final Source source;
+    private final boolean compact;
     private final TextPaint text = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -45,10 +46,14 @@ final class GlassWidgetsView extends View {
         }
     };
 
-    GlassWidgetsView(Context context, KsTheme theme, Source source) {
+    GlassWidgetsView(Context context, KsTheme theme, Source source) { this(context, theme, source, false); }
+
+    /** compact = one slim strip at the top, for full-screen Now Playing. */
+    GlassWidgetsView(Context context, KsTheme theme, Source source, boolean compact) {
         super(context);
         this.theme = theme;
         this.source = source;
+        this.compact = compact;
         fill.setColor(Color.argb(118, 10, 12, 16));
         stroke.setStyle(Paint.Style.STROKE);
         stroke.setStrokeWidth(dp(1));
@@ -81,6 +86,7 @@ final class GlassWidgetsView extends View {
         Snapshot s = source.snapshot();
         if (s == null) return;
         canvas = c;
+        if (compact) { drawStrip(c, s); return; }
         float m = dp(28), pad = dp(20);
         float w = getWidth(), h = getHeight();
         Date now = new Date();
@@ -179,6 +185,32 @@ final class GlassWidgetsView extends View {
                 c.drawText(TextUtils.ellipsize(e.optString("m"), text, avail, TextUtils.TruncateAt.END).toString(), tx, y + dp(34), text);
             }
         }
+    }
+
+    /** Time · weather · inside · alerts in one glass pill, centred at the top. */
+    private void drawStrip(Canvas c, Snapshot s) {
+        JSONObject live = s.live == null ? new JSONObject() : s.live;
+        List<String> parts = new ArrayList<>();
+        parts.add(new SimpleDateFormat(s.h24 ? "HH:mm" : "h:mm", Locale.getDefault()).format(new Date()));
+        Object temp = live.opt("temp");
+        boolean weather = temp instanceof Number;
+        if (weather) parts.add(Math.round(((Number) temp).doubleValue()) + live.optString("unit", "°") + " " + condition(live.optString("cond")).toLowerCase(Locale.getDefault()));
+        String inside = live.optString("inside");
+        if (!inside.isEmpty() && !inside.contains("unknown") && !inside.contains("unavailable")) parts.add(inside + " inside");
+        for (String a : live.optString("info").split(" · ")) {
+            String v = a.trim();
+            if (!v.isEmpty() && !v.equals("unknown") && !v.equals("unavailable")) parts.add(v);
+        }
+        String line = TextUtils.join("   ·   ", parts);
+        font(16, 400, INK);
+        float maxW = getWidth() - dp(56) * 2;
+        String shown = TextUtils.ellipsize(line, text, maxW - dp(40), TextUtils.TruncateAt.END).toString();
+        float tw = text.measureText(shown), h = dp(44), top = dp(20);
+        float l = (getWidth() - tw) / 2 - dp(20);
+        rect.set(l, top, l + tw + dp(40), top + h);
+        c.drawRoundRect(rect, h / 2, h / 2, fill);
+        c.drawRoundRect(rect, h / 2, h / 2, stroke);
+        c.drawText(shown, l + dp(20), top + dp(28), text);
     }
 
     private void drawIcon(String name, float x, float y, float size) {

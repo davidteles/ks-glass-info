@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "glass-info",
   "name": "Glass Info",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "apiVersion": 1,
   "minAndroidSdk": 24,
   "minAppVersion": "2026.11.14",
@@ -176,6 +176,14 @@
       "title": "Chip 4 name",
       "default": "",
       "group": "Day widgets"
+    },
+    {
+      "key": "nowPlayingStrip",
+      "type": "boolean",
+      "title": "Info strip above Now Playing",
+      "default": true,
+      "group": "Day widgets",
+      "description": "While the full-screen Now Playing player shows, a slim glass strip at the top carries the time, weather, inside temperature and alerts."
     }
   ]
 }
