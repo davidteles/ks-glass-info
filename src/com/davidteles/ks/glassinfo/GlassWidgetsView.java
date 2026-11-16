@@ -187,30 +187,66 @@ final class GlassWidgetsView extends View {
         }
     }
 
-    /** Time · weather · inside · alerts in one glass pill, centred at the top. */
+    /**
+     * Full-screen Now Playing: a big clock + date in the empty area left of the cover, weather + inside on the right,
+     * and only the alerts in a slim pill at the top. The cover and title use the middle third of the screen.
+     */
     private void drawStrip(Canvas c, Snapshot s) {
         JSONObject live = s.live == null ? new JSONObject() : s.live;
-        List<String> parts = new ArrayList<>();
-        parts.add(new SimpleDateFormat(s.h24 ? "HH:mm" : "h:mm", Locale.getDefault()).format(new Date()));
+        float w = getWidth(), h = getHeight(), pad = dp(22);
+        float side = w * 0.30f;            // each side area
+        float cy = h * 0.32f;              // level with the cover
+
+        // Left: clock + date.
+        Date now = new Date();
+        String time = new SimpleDateFormat(s.h24 ? "HH:mm" : "h:mm", Locale.getDefault()).format(now);
+        String date = new SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(now);
+        if (!date.isEmpty()) date = Character.toUpperCase(date.charAt(0)) + date.substring(1);
+        float size = Math.min(84, side / dp(1) * 0.30f);
+        font(size, 300, INK); float tw = text.measureText(time); float th = dp(size);
+        font(17, 400, s.accent); String d2 = TextUtils.ellipsize(date, text, side - pad * 2 - dp(16), TextUtils.TruncateAt.END).toString(); float dw = text.measureText(d2);
+        float cw = Math.min(side - dp(16), Math.max(tw, dw) + pad * 2), ch = pad * 2 + th + dp(28);
+        float l = (side - cw) / 2 + dp(8), t = cy - ch / 2;
+        card(l, t, l + cw, t + ch);
+        font(size, 300, INK); c.drawText(time, l + (cw - tw) / 2, t + pad + th * 0.82f, text);
+        font(17, 400, s.accent); c.drawText(d2, l + (cw - dw) / 2, t + pad + th + dp(22), text);
+
+        // Right: weather + inside.
         Object temp = live.opt("temp");
-        boolean weather = temp instanceof Number;
-        if (weather) parts.add(Math.round(((Number) temp).doubleValue()) + live.optString("unit", "°") + " " + condition(live.optString("cond")).toLowerCase(Locale.getDefault()));
-        String inside = live.optString("inside");
-        if (!inside.isEmpty() && !inside.contains("unknown") && !inside.contains("unavailable")) parts.add(inside + " inside");
+        if (temp instanceof Number) {
+            String tt = Math.round(((Number) temp).doubleValue()) + live.optString("unit", "°");
+            String cond = condition(live.optString("cond"));
+            String inside = live.optString("inside");
+            String in = inside.isEmpty() || inside.contains("unknown") || inside.contains("unavailable") ? "" : inside + " inside";
+            float icon = dp(64);
+            font(54, 300, INK); float t1 = text.measureText(tt);
+            font(17, 400, MUTED); float t2 = Math.max(text.measureText(cond), text.measureText(in));
+            float ww = Math.min(side - dp(16), pad * 2 + icon + dp(16) + Math.max(t1, t2)), wh = pad * 2 + dp(54) + dp(52);
+            float rl = w - side + (side - ww) / 2 - dp(8), rt = cy - wh / 2;
+            card(rl, rt, rl + ww, rt + wh);
+            drawIcon(weatherIcon(live.optString("cond")), rl + pad, rt + pad + dp(10), icon);
+            float x = rl + pad + icon + dp(16);
+            font(54, 300, INK); c.drawText(tt, x, rt + pad + dp(46), text);
+            font(17, 400, MUTED); c.drawText(cond, x, rt + pad + dp(74), text);
+            if (!in.isEmpty()) c.drawText(in, x, rt + pad + dp(96), text);
+        }
+
+        // Top: alerts only.
+        List<String> parts = new ArrayList<>();
         for (String a : live.optString("info").split(" · ")) {
             String v = a.trim();
             if (!v.isEmpty() && !v.equals("unknown") && !v.equals("unavailable")) parts.add(v);
         }
+        if (parts.isEmpty()) return;
         String line = TextUtils.join("   ·   ", parts);
-        font(16, 400, INK);
-        float maxW = getWidth() - dp(56) * 2;
-        String shown = TextUtils.ellipsize(line, text, maxW - dp(40), TextUtils.TruncateAt.END).toString();
-        float tw = text.measureText(shown), h = dp(44), top = dp(20);
-        float l = (getWidth() - tw) / 2 - dp(20);
-        rect.set(l, top, l + tw + dp(40), top + h);
-        c.drawRoundRect(rect, h / 2, h / 2, fill);
-        c.drawRoundRect(rect, h / 2, h / 2, stroke);
-        c.drawText(shown, l + dp(20), top + dp(28), text);
+        font(15, 400, INK);
+        String shown = TextUtils.ellipsize(line, text, w * 0.5f, TextUtils.TruncateAt.END).toString();
+        float sw = text.measureText(shown), sh = dp(36), top = dp(10);
+        float sl = (w - sw) / 2 - dp(18);
+        rect.set(sl, top, sl + sw + dp(36), top + sh);
+        c.drawRoundRect(rect, sh / 2, sh / 2, fill);
+        c.drawRoundRect(rect, sh / 2, sh / 2, stroke);
+        c.drawText(shown, sl + dp(18), top + dp(23), text);
     }
 
     private void drawIcon(String name, float x, float y, float size) {
