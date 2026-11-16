@@ -28,8 +28,10 @@ import org.json.JSONObject;
 public final class GlassInfoPlugin implements KioskPlugin {
     private static final String KEY = "glass";
     private static final String SUB = "glass-live";
-    private static final String SUB_CUSTOM = "glass-custom";
-    private String customText = "";
+    private static final String SUB_TEXT = "glass-text-";
+    private static final int MAX_TEXTS = 6;
+    private final String[] texts = new String[MAX_TEXTS];
+    private int textSubs;
     private static final String ENTITY = "[a-z_]+\\.[a-z0-9_]+";
 
     private PluginHost host;
@@ -107,11 +109,16 @@ public final class GlassInfoPlugin implements KioskPlugin {
             if (timer != null) timer.execute(this::updateOverlay);
             return;
         }
-        if (("ks.ha.subscription." + SUB_CUSTOM).equals(event) && payload != null && "event".equals(payload.get("type"))) {
-            Object ev = payload.get("event");
-            Object r = ev instanceof Map ? ((Map<?, ?>) ev).get("result") : null;
-            customText = r == null ? "" : String.valueOf(r);
-            publish(false);
+        if (event != null && event.startsWith("ks.ha.subscription." + SUB_TEXT)) {
+            if (payload != null && "event".equals(payload.get("type"))) {
+                try {
+                    int i = Integer.parseInt(event.substring(("ks.ha.subscription." + SUB_TEXT).length()));
+                    Object ev = payload.get("event");
+                    Object r = ev instanceof Map ? ((Map<?, ?>) ev).get("result") : null;
+                    if (i >= 0 && i < MAX_TEXTS) texts[i] = r == null ? "" : String.valueOf(r);
+                    publish(false);
+                } catch (NumberFormatException ignored) { }
+            }
             return;
         }
         if (!("ks.ha.subscription." + SUB).equals(event) || payload == null) return;
@@ -141,7 +148,7 @@ public final class GlassInfoPlugin implements KioskPlugin {
             try { host.unsubscribe("screensaver.state"); } catch (RuntimeException ignored) { }
             try { host.unsubscribe("screensaver.appearance"); } catch (RuntimeException ignored) { }
             try { host.haUnsubscribe(SUB); } catch (RuntimeException ignored) { }
-            try { host.haUnsubscribe(SUB_CUSTOM); } catch (RuntimeException ignored) { }
+            for (int i = 0; i < MAX_TEXTS; i++) try { host.haUnsubscribe(SUB_TEXT + i); } catch (RuntimeException ignored) { }
             try { host.removeScreensaver(KEY); } catch (RuntimeException ignored) { }
         }
         subscribed = false;
@@ -262,25 +269,32 @@ public final class GlassInfoPlugin implements KioskPlugin {
         t.append("'info': ").append(info.isEmpty() ? "''" : "states('" + info + "')").append(", ");
         t.append("'g': [");
         boolean first = true;
-        for (int i = 1; i <= 8; i++) {
-            String e = entity("glance" + i);
-            if (e.isEmpty()) continue;
-            Object raw = settings.get("glance" + i + "Name");
+        int n = 0;
+        for (Map<?, ?> row : rows("chips")) {
+            Object ev = row.get("entity");
+            String e = ev instanceof String && ((String) ev).matches(ENTITY) ? (String) ev : "";
+            if (e.isEmpty() || ++n > 8) continue;
+            Object raw = row.get("name");
             String name = raw instanceof String ? ((String) raw).replaceAll("[^\\p{L}\\p{N} ._-]", "") : "";
+            Object ic = row.get("icon");
+            String icon = ic instanceof String && ((String) ic).matches("mdi:[a-z0-9-]+") ? (String) ic : "";
             if (!first) t.append(", ");
             first = false;
             t.append("['").append(name).append("', ((states('").append(e).append("') | float(0) | round(0) | int) ~ (' ' ~ state_attr('")
              .append(e).append("','unit_of_measurement') if state_attr('").append(e).append("','unit_of_measurement') else '')) if states('")
-             .append(e).append("') | is_number else state_translated('").append(e).append("'), '").append(icon(i)).append("']");
+             .append(e).append("') | is_number else state_translated('").append(e).append("'), '").append(icon).append("']");
         }
         t.append("]");
         t.append("} | to_json }}");
         return t.toString();
     }
 
-    private String icon(int i) {
-        Object v = settings.get("glance" + i + "Icon");
-        return v instanceof String && ((String) v).matches("mdi:[a-z0-9-]+") ? (String) v : "";
+    /** Rows of a list setting, as maps; empty when the setting is missing or not a list. */
+    private List<Map<?, ?>> rows(String key) {
+        List<Map<?, ?>> out = new ArrayList<>();
+        Object v = settings.get(key);
+        if (v instanceof List) for (Object o : (List<?>) v) if (o instanceof Map) out.add((Map<?, ?>) o);
+        return out;
     }
 
     private void subscribe() {
@@ -288,16 +302,18 @@ public final class GlassInfoPlugin implements KioskPlugin {
             try { host.haUnsubscribe(SUB); } catch (RuntimeException ignored) { }
             subscribed = false;
         }
-        try { host.haUnsubscribe(SUB_CUSTOM); } catch (RuntimeException ignored) { }
-        customText = "";
-        Object ct = settings.get("customTemplate");
-        if (ct instanceof String && !((String) ct).trim().isEmpty()) {
+        for (int i = 0; i < MAX_TEXTS; i++) { try { host.haUnsubscribe(SUB_TEXT + i); } catch (RuntimeException ignored) { } texts[i] = ""; }
+        List<Map<?, ?>> tr = rows("texts");
+        for (int i = 0; i < tr.size() && i < MAX_TEXTS; i++) {
+            Object ct = tr.get(i).get("template");
+            if (!(ct instanceof String) || ((String) ct).trim().isEmpty()) continue;
             Map<String, Object> cm = new HashMap<>();
             cm.put("type", "render_template");
             cm.put("template", ct);
+            final int idx = i;
             try {
-                host.haSubscribe(SUB_CUSTOM, cm, (ok, data, error) -> { if (!ok) host.status("Custom text: " + error, true); });
-            } catch (RuntimeException error) { host.log("Glass Info: custom text unavailable " + error.getMessage()); }
+                host.haSubscribe(SUB_TEXT + i, cm, (ok, data, error) -> { if (!ok) host.status("Free text " + (idx + 1) + ": " + error, true); });
+            } catch (RuntimeException error) { host.log("Glass Info: free text unavailable " + error.getMessage()); }
         }
         Map<String, Object> message = new HashMap<>();
         message.put("type", "render_template");
@@ -324,7 +340,10 @@ public final class GlassInfoPlugin implements KioskPlugin {
         List<String> calendars = new ArrayList<>();
         synchronized (this) {
             h = host;
-            for (String key : new String[] {"calendar1", "calendar2"}) if (!entity(key).isEmpty()) calendars.add(entity(key));
+            for (Map<?, ?> row : rows("calendars")) {
+                Object e = row.get("entity");
+                if (e instanceof String && ((String) e).matches(ENTITY) && calendars.size() < 4) calendars.add((String) e);
+            }
         }
         if (h == null) return;
         if (calendars.isEmpty()) {
@@ -357,6 +376,12 @@ public final class GlassInfoPlugin implements KioskPlugin {
         }
     }
 
+    private int calendarIndex(String cal) {
+        List<Map<?, ?>> r = rows("calendars");
+        for (int i = 0; i < r.size(); i++) if (cal.equals(r.get(i).get("entity"))) return i;
+        return -1;
+    }
+
     /** Flattens {response: {calendar.x: {events: [...]}}} into a short, sorted list. */
     private JSONArray collect(Object result) {
         List<JSONObject> all = new ArrayList<>();
@@ -376,7 +401,7 @@ public final class GlassInfoPlugin implements KioskPlugin {
                     out.put("s", e.optString("start"));
                     out.put("e", e.optString("end"));
                     out.put("m", e.optString("summary"));
-                    out.put("c", cal.equals(entity("calendar1")) ? 1 : 2);
+                    out.put("c", Math.max(0, calendarIndex(cal)));
                     all.add(out);
                 }
             }
@@ -407,7 +432,21 @@ public final class GlassInfoPlugin implements KioskPlugin {
         } catch (Exception ignored) { }
         options.put("data", data.toString());
         JSONObject liveForView = live;
-        try { liveForView = new JSONObject(live.toString()); liveForView.put("x", customText); } catch (Exception ignored) { }
+        try {
+            liveForView = new JSONObject(live.toString());
+            JSONArray xs = new JSONArray();
+            List<Map<?, ?>> tr = rows("texts");
+            for (int i = 0; i < tr.size() && i < MAX_TEXTS; i++) {
+                JSONObject x = new JSONObject();
+                x.put("t", texts[i] == null ? "" : texts[i]);
+                Object pos = tr.get(i).get("position"), style = tr.get(i).get("style"), size = tr.get(i).get("size");
+                x.put("pos", pos instanceof String ? pos : "Bottom right");
+                x.put("style", style instanceof String ? style : "Card");
+                x.put("size", size instanceof Number ? ((Number) size).doubleValue() : 18);
+                xs.put(x);
+            }
+            liveForView.put("xs", xs);
+        } catch (Exception ignored) { }
         int accentColor;
         try { accentColor = Color.parseColor((String) options.get("accent")); } catch (RuntimeException error) { accentColor = 0xFFFFB547; }
         snapshot = new GlassWidgetsView.Snapshot(liveForView, events, accentColor, Boolean.TRUE.equals(options.get("h24")), new HashMap<>(settings));
