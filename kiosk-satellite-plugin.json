@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "id": "glass-info",
+  "name": "Glass Info",
+  "version": "0.3.1",
+  "apiVersion": 1,
+  "minAndroidSdk": 24,
+  "minAppVersion": "2026.11.14",
+  "entryClass": "com.davidteles.ks.glassinfo.GlassInfoPlugin",
+  "description": "A calm glass info screensaver: clock, weather, inside temperature, the next events and your alerts in one panel, fed live by Home Assistant.",
+  "author": "davidteles",
+  "license": "Apache-2.0",
+  "capabilities": [
+    "screensaver",
+    "screensaver.mode",
+    "ha",
+    "host.read",
+    "overlay"
+  ],
+  "icon": "icon.png",
+  "settings": [
+    {
+      "key": "variant",
+      "type": "select",
+      "title": "Look",
+      "default": "Black",
+      "options": [
+        "Black",
+        "Midnight"
+      ],
+      "group": "Look",
+      "description": "Black is pure black for night and OLED-like calm; Midnight adds a very dark blue glow."
+    },
+    {
+      "key": "accent",
+      "type": "color",
+      "title": "Accent color",
+      "default": "#FFB547",
+      "group": "Look",
+      "description": "Used for the date line and the event bars."
+    },
+    {
+      "key": "clock24",
+      "type": "boolean",
+      "title": "24-hour clock",
+      "default": true,
+      "group": "Look"
+    },
+    {
+      "key": "hideWidgets",
+      "type": "boolean",
+      "title": "Hide the stock widgets",
+      "default": true,
+      "group": "Look",
+      "description": "While Glass Info is on screen, the corner widgets and At a Glance row are drawn in black so only the panel shows. Other screensavers keep them."
+    },
+    {
+      "key": "weatherEntity",
+      "type": "entity",
+      "title": "Weather",
+      "default": "",
+      "group": "Home Assistant",
+      "description": "A weather entity, such as weather.home."
+    },
+    {
+      "key": "insideEntity",
+      "type": "entity",
+      "title": "Inside temperature",
+      "default": "",
+      "group": "Home Assistant",
+      "description": "Optional. A sensor whose state is shown as 'inside'."
+    },
+    {
+      "key": "infoEntity",
+      "type": "entity",
+      "title": "Alerts line",
+      "default": "",
+      "group": "Home Assistant",
+      "description": "Optional. A sensor whose state lists alerts separated by ' · '. Each one becomes a chip; empty shows none."
+    },
+    {
+      "key": "calendar1",
+      "type": "entity",
+      "title": "Calendar 1",
+      "default": "",
+      "group": "Events"
+    },
+    {
+      "key": "calendar2",
+      "type": "entity",
+      "title": "Calendar 2",
+      "default": "",
+      "group": "Events"
+    },
+    {
+      "key": "days",
+      "type": "number",
+      "title": "Days ahead",
+      "default": 3,
+      "min": 1,
+      "max": 7,
+      "step": 1,
+      "unit": "days",
+      "group": "Events"
+    },
+    {
+      "key": "maxEvents",
+      "type": "number",
+      "title": "Maximum events",
+      "default": 4,
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "group": "Events"
+    },
+    {
+      "key": "dayWidgets",
+      "type": "boolean",
+      "title": "Glass widgets over other screensavers",
+      "default": true,
+      "group": "Day widgets",
+      "description": "Draws our clock, weather, next events and chips over the photo screensaver (any mode except Glass Info itself)."
+    },
+    {
+      "key": "glance1",
+      "type": "entity",
+      "title": "Chip 1",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance1Name",
+      "type": "string",
+      "title": "Chip 1 name",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance2",
+      "type": "entity",
+      "title": "Chip 2",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance2Name",
+      "type": "string",
+      "title": "Chip 2 name",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance3",
+      "type": "entity",
+      "title": "Chip 3",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance3Name",
+      "type": "string",
+      "title": "Chip 3 name",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance4",
+      "type": "entity",
+      "title": "Chip 4",
+      "default": "",
+      "group": "Day widgets"
+    },
+    {
+      "key": "glance4Name",
+      "type": "string",
+      "title": "Chip 4 name",
+      "default": "",
+      "group": "Day widgets"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Glass Info</title>
+<link rel="stylesheet" href="glass.css">
+</head>
+<body>
+<main class="stage">
+  <section class="panel" aria-label="Glass Info">
+    <div class="top">
+      <div class="time-block">
+        <div class="time" id="time">--:--</div>
+        <div class="date" id="date"></div>
+      </div>
+      <div class="weather" id="weather">
+        <div class="wx-icon" id="wx-icon"></div>
+        <div class="wx-text">
+          <div class="wx-temp" id="wx-temp"></div>
+          <div class="wx-cond" id="wx-cond"></div>
+          <div class="wx-inside" id="wx-inside"></div>
+        </div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <ul class="events" id="events"></ul>
+    <div class="chips" id="chips"></div>
+  </section>
+</main>
+<script src="glass.js"></script>
+</body>
+</html>
