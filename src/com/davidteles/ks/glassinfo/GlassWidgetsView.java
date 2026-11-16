@@ -118,7 +118,7 @@ final class GlassWidgetsView extends View {
         INK = Color.rgb(243, 238, 230); MUTED = Color.argb(160, 243, 238, 230);
         family = "Kiosk Satellite"; radiusDp = 22; iconColor = Color.rgb(214, 221, 232);
         stroke.setColor(Color.argb(46, 255, 255, 255));
-        if (compact) { drawStrip(c, s); return; }
+        if (compact) { drawStrip(c, s, 0.30f, getHeight() * 0.10f); return; }
         final float base = s.num("scale", 100, 60, 180) / 100f;
         k = base;
         int tint = color(s, "glassColor", Color.rgb(10, 12, 16));
@@ -129,6 +129,12 @@ final class GlassWidgetsView extends View {
         family = s.str("fontFamily", "Kiosk Satellite");
         radiusDp = s.num("cornerRadius", 22, 0, 40);
         iconColor = color(s, "weatherIconColor", Color.rgb(214, 221, 232));
+        if ("Columns".equals(s.str("dayLayout", "Corners"))) {
+            // Same arrangement as beside Now Playing, with the user's look; the middle stays free for the photo.
+            k = base;
+            drawStrip(c, s, 0.27f, getResources().getDisplayMetrics().density * s.num("edgeMargin", 28, 0, 120));
+            return;
+        }
         final int[] calColors = calColors(s);
         final int clockWeight = "Bold".equals(s.str("clockWeight", "Light")) ? 600 : "Regular".equals(s.str("clockWeight", "Light")) ? 400 : 300;
         final float m = getResources().getDisplayMetrics().density * s.num("edgeMargin", 28, 0, 120), pad = dp(20);
@@ -388,14 +394,14 @@ final class GlassWidgetsView extends View {
      * left = big clock + date, then every alert (amber); right = weather + inside, then your chips
      * (alarm, car, power...) and the next events while there is room.
      */
-    private void drawStrip(Canvas c, Snapshot s) {
+    private void drawStrip(Canvas c, Snapshot s, float sideFrac, float top) {
         JSONObject live = s.live == null ? new JSONObject() : s.live;
         alertTint = color(s, "alertColor", Color.rgb(70, 48, 12));
         float w = getWidth(), h = getHeight(), pad = dp(22), gap = dp(10);
-        float side = w * 0.30f;
+        float side = w * sideFrac;
         float colW = Math.min(side - dp(28), dp(360));
         float leftL = (side - colW) / 2 + dp(6), rightL = w - side + (side - colW) / 2 - dp(6);
-        float top = h * 0.10f, bottomLimit = h - dp(20);
+        float bottomLimit = h - dp(20);
 
         // Left: clock + date, then the alerts.
         Date now = new Date();

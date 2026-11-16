@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "glass-info",
   "name": "Glass Info",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "apiVersion": 1,
   "minAndroidSdk": 24,
   "minAppVersion": "2026.11.14",
@@ -205,6 +205,18 @@
         "Top centre"
       ],
       "group": "Day layout"
+    },
+    {
+      "key": "dayLayout",
+      "type": "select",
+      "title": "Day layout style",
+      "default": "Corners",
+      "options": [
+        "Corners",
+        "Columns"
+      ],
+      "group": "Day layout",
+      "description": "Corners = cards in the corners and a chip row. Columns = like beside Now Playing: clock and alerts on the left; weather, chips and events on the right."
     },
     {
       "key": "scale",
