@@ -2,7 +2,9 @@
 
 Calm glass widgets for your [Kiosk Satellite](https://kiosksatellite.com) screensaver, fed live by Home Assistant.
 
-- **Day:** glass cards over the photos (or any other screensaver): clock and date, weather with the inside temperature, your next events, and a row of chips for alerts plus up to four entities (alarm, car battery, power…).
+It's what the tablet shows while it's **idle**: a plugin inside the Kiosk Satellite app, not a Home Assistant dashboard. For the dashboard you use when you touch the tablet, see [Wall Panel Kit](https://github.com/davidteles/ha-wall-panel-kit).
+
+- **Day:** glass cards over the photos (or any other screensaver): clock and date, weather with the inside temperature, your next events, and a row of chips for alerts plus up to eight entities of your choice (alarm, car battery, power…).
 - **Music:** while the full-screen Now Playing player shows, a big clock and the weather sit either side of the cover, with your alerts in a slim pill at the top.
 - **Night:** a **Glass Info** screensaver mode. One glass panel on black with a big clock, the weather, the next events and the alerts. The stock widgets are hidden over it.
 
