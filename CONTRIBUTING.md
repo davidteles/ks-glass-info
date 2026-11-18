@@ -29,3 +29,7 @@ Imperative and short ("Add water tank sensor"), with a body explaining *why* whe
 ## Privacy
 
 No personal data, keys, tokens, codes or private hostnames, ever. Screenshots are people-free, with maps and balances blurred.
+
+## Before a release
+
+Run `python tools/test.py`, then the steps in [CHECKLIST.md](CHECKLIST.md) that the change touches, on a real tablet.
