@@ -10,6 +10,14 @@ It's what the tablet shows while it's **idle**: a plugin inside the Kiosk Satell
 
 ![Night panel (sample data)](mockup-black.jpg)
 
+## Requirements
+
+| | Needs | Tested |
+|---|---|---|
+| Kiosk Satellite | **2026.11.14** or newer (the plugin won't install on older) | 2026.11.23 |
+| Android | 7.0 or newer | 16 (Samsung Galaxy Tab A11+, SM-X230) |
+| Home Assistant | Connected in Kiosk Satellite; the entities you pick in the settings | 2026.11.2 |
+
 ## Install
 1. In Kiosk Satellite, open **Plugin Manager > Add repository** and enter `https://github.com/davidteles/ks-glass-info`.
 2. Install **Glass Info** and trust it.
