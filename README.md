@@ -46,6 +46,11 @@ To use only these widgets, turn off the stock **Widgets** and **At a Glance** in
 | Chips | A list of up to 8 entities, each with a name and an icon; size; alert colour | Numbers rounded with their unit, other states translated |
 | Free text | A list of up to 6 cards: any Home Assistant template, position, card or text only, size | Several lines allowed, e.g. `{{ states('sensor.outside_humidity') }} % humidity` |
 
+## Remove it
+1. If **Glass Info** is your screensaver mode (or in a schedule entry), pick another mode first.
+2. Turn the stock **Widgets** and **At a Glance** back on if you turned them off.
+3. In **Plugin Manager**, uninstall **Glass Info**. Nothing is left in Home Assistant: the plugin only reads from it.
+
 ## How it works
 - **Live values:** one Home Assistant `render_template` subscription returns all of them at once.
 - **Events:** fetched every 10 minutes.
