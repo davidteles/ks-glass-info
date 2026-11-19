@@ -450,12 +450,16 @@ final class GlassWidgetsView extends View {
             String tt = Math.round(((Number) temp).doubleValue()) + live.optString("unit", "°");
             String cond = condition(live.optString("cond"));
             String in = inside.isEmpty() || inside.contains("unknown") || inside.contains("unavailable") ? "" : inside + " inside";
-            float icon = dp(64);
+            // In a narrow column (portrait, after rotating) the icon and the 54 sp temperature don't fit:
+            // StripSizes drops the icon and shrinks the text so "15°C" stays inside the card.
+            font(54, 300, INK);
+            float[] ws = StripSizes.weather(colW / dp(1), pad / dp(1), text.measureText(tt) / dp(1));
+            float icon = dp(ws[0]);
             float wh = pad * 2 + dp(54) + dp(52);
             card(rightL, ry, rightL + colW, ry + wh);
-            drawIcon(weatherIcon(live.optString("cond")), rightL + pad, ry + pad + dp(10), icon);
-            float x = rightL + pad + icon + dp(16), avail = rightL + colW - pad - x;
-            font(54, 300, INK); c.drawText(tt, x, ry + pad + dp(46), text);
+            if (icon > 0) drawIcon(weatherIcon(live.optString("cond")), rightL + pad, ry + pad + dp(10), icon);
+            float x = rightL + pad + icon + dp(ws[1]), avail = rightL + colW - pad - x;
+            font(ws[2], 300, INK); c.drawText(TextUtils.ellipsize(tt, text, avail, TextUtils.TruncateAt.END).toString(), x, ry + pad + dp(46), text);
             font(17, 400, MUTED); c.drawText(TextUtils.ellipsize(cond, text, avail, TextUtils.TruncateAt.END).toString(), x, ry + pad + dp(74), text);
             if (!in.isEmpty()) c.drawText(TextUtils.ellipsize(in, text, avail, TextUtils.TruncateAt.END).toString(), x, ry + pad + dp(96), text);
             ry += wh + dp(14);
