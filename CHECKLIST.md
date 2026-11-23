@@ -10,3 +10,11 @@
 6. **Settings:** change a chip and the alert colour; the screensaver picks them up without restarting the app.
 
 Last full run: (none recorded yet)
+
+## Partial runs
+
+Steps that were checked on a real tablet outside a full run. Record the version, the device and what was and wasn't looked at.
+
+| Date | Version | Device | What was checked | Result | Not checked |
+|---|---|---|---|---|---|
+| 2026-11-19 | v0.8.1 (release zip, sha256 matched) | Samsung Galaxy Tab A11, Kiosk Satellite (app version not recorded) | Day mode, Columns layout: portrait, then rotated to landscape on the device without reopening | Portrait: the temperature fits inside its card (the v0.8.0 bug); condition and inside temperature shown in full. Landscape: weather icon back, temperature inside its card, date in full | A cold start in portrait; Night and Now Playing; steps 2–6 above. Still shortened in portrait (by design, not a bug): the long date and long event names |
